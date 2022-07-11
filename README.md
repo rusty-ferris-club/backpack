@@ -38,7 +38,7 @@ $ bp new user/repo
 
 # :rocket: Quick Start
 
-Grab a release from [releases](https://github.com/jondot/bumblefoot/releases) and run help:
+Grab a release from [releases](https://github.com/rusty-ferris-club/backpack/releases) and run help:
 ```
 $ backpack --help
 backpack 1.0.0
@@ -214,7 +214,7 @@ $ bp config --init --global
 
 # Thanks
 
-To all [Contributors](https://github.com/jondot/bumblefoot/graphs/contributors) - you make this happen, thanks!
+To all [Contributors](https://github.com/rusty-ferris-club/backpack/graphs/contributors) - you make this happen, thanks!
 
 
 # Copyright

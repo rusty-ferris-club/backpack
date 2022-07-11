@@ -11,7 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const TEMPLATE_PROJECT_NAME: &str = "bumblefoot";
+const TEMPLATE_PROJECT_NAME: &str = "backpack";
 fn main() -> Result<(), anyhow::Error> {
     let cli = Command::new("xtask")
         .setting(AppSettings::SubcommandRequiredElseHelp)
