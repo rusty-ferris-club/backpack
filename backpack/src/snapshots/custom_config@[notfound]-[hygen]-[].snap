@@ -1,0 +1,10 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, &config))"
+---
+(
+    "notfound:hygen",
+    Err(
+        "no vendor found for: notfound",
+    ),
+)

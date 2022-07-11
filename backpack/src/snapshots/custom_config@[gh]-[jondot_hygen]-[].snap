@@ -1,0 +1,25 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, false, &config))"
+---
+(
+    "gh:jondot/hygen",
+    Ok(
+        (
+            beta.github.com/my-org,
+            Location {
+                url: "https://beta.github.com/my-org/jondot/hygen",
+                domain: "beta.github.com",
+                path: "/my-org/jondot/hygen",
+                project: "hygen",
+                port: None,
+                query: None,
+                subfolder: None,
+                gref: None,
+                username: "",
+                password: None,
+                is_git: false,
+            },
+        ),
+    ),
+)

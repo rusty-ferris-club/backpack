@@ -1,0 +1,10 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, &config))"
+---
+(
+    "hygen#wip",
+    Err(
+        "cannot find a project in: /hygen",
+    ),
+)

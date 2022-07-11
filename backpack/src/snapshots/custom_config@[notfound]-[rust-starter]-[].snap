@@ -1,0 +1,10 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, false, &config))"
+---
+(
+    "notfound:rust-starter",
+    Err(
+        "no vendor found for: notfound",
+    ),
+)

@@ -1,0 +1,40 @@
+
+
+#
+# Your backpack configuration
+#
+version: 1
+
+#
+# set up aliases as convenient shortcuts to your starter projects or templates.
+# $ backpack new rust-starter
+#
+# aliases:
+#   rust-starter: 
+#     shortlink: jondot/rust-starter  # you can use any custom prefix here too
+#     # is_git: true # force fetch from ssh
+#
+
+#
+# set up custom vendor prefixes, for convenience and also for custom git
+# URLs such as hosted github or gitlab and others.
+# $ backpack new ghe:jondot/rust-starter
+#
+# vendors:
+#   # overrides the default git vendor when you don't specify a prefix.
+#   # $ backpack my-org/my-repo
+#   default: 
+#     kind: gitlab # options: gitlab | github | bitbucket
+#     base: my.gitlab.com
+#   custom:
+#     # custom github org to prefix, and also overrides the 'gh:' prefix.
+#     # $ backpack new gh:my-repo my-repo
+#     gh:
+#       kind: github
+#       base: github.com/my-org
+#
+#     # sets the 'ghe' prefix to a custom git vendor for your organization, self-hosted.
+#     # $ backpack new ghe:my-team/my-repo my-repo
+#     ghe:
+#       kind: github
+#       base: github.enterprise.example.com

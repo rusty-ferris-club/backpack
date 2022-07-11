@@ -1,0 +1,15 @@
+---
+source: backpack/tests/vendors_test.rs
+expression: assets
+---
+Assets {
+    archive: Some(
+        Archive {
+            url: "https://gitlab.com/gitlab-org/gitlab/-/archive/refs/heads/master/gitlab-refs-heads-master.tar.gz",
+            root: FirstFolder,
+        },
+    ),
+    git: Some(
+        "git@gitlab.com:gitlab-org/gitlab.git",
+    ),
+}

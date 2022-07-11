@@ -1,0 +1,67 @@
+[package]
+name = "backpack"
+version = "1.0.0"
+edition = "2021"
+build = "build.rs"
+
+
+#
+# == This is a dual CLI + library crate. ==
+#
+# * To turn this into a pure library crate, remove [[features]] and [[bin]],
+#   and remove optional deps.
+# * To turn into a pure CLI crate, do the same as before, but don't remove
+#   optional deps, turn them into non-optional.
+#
+# To use both as dual crate:
+#
+# 1. For a CLI, nothing needs to be done.
+# 2. For a library, build using `--no-default-features`, and depend using `default-features = false`
+#
+
+
+[dependencies]
+
+clap = { version = "3", features = ["cargo"], optional = true }
+serde = "1"
+serde_json = "1"
+serde_derive = "1"
+serde_yaml = "^0.8.24"
+env_logger = "^0.9.0"
+log = "^0.4.17"
+anyhow = "1"
+console = "^0.15.0"
+url = "2"
+git-url-parse = "^0.4.2"
+lazy_static = "1"
+regex = "1"
+cached-path = "^0.5.3"
+fs_extra = "^1.2.0"
+tempfile = "3"
+dialoguer = "^0.10.1"
+walkdir = "2"
+serde_merge = "^0.1.2"
+dirs = "4"
+tracing = "^0.1.34"
+tracing-forest = { version = "^0.1.4" }
+tracing-subscriber = { version = "^0.3.11", features = ["env-filter"] }
+
+[dev-dependencies]
+insta = { version = "1", features = ["backtrace"] }
+rstest = "^0.14.0"
+reqwest = { version = "^0.11.11", features = ["blocking"] }
+pretty_assertions = "1"
+
+[build-dependencies]
+vergen = "7"
+anyhow = "1"
+
+
+[features]
+default = ["cli"]
+# list optionals here:
+cli = ["clap"]
+
+[[bin]]
+name = "bp"
+required-features = ["cli"]
