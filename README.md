@@ -46,7 +46,7 @@ brew tap rusty-ferris-club/tap && brew install backpack
 
 Otherwise, grab a release from [releases](https://github.com/rusty-ferris-club/backpack/releases) and run help:
 ```
-$ backpack --help
+$ bp --help
 backpack 1.0.0
 Create projects from existing repos
 
