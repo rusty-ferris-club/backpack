@@ -38,7 +38,13 @@ $ bp new user/repo
 
 # :rocket: Quick Start
 
-Grab a release from [releases](https://github.com/rusty-ferris-club/backpack/releases) and run help:
+For macOS:
+
+```
+brew tap rusty-ferris-club/tap && brew install backpack
+```
+
+Otherwise, grab a release from [releases](https://github.com/rusty-ferris-club/backpack/releases) and run help:
 ```
 $ backpack --help
 backpack 1.0.0
