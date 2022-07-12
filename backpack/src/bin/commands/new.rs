@@ -45,7 +45,7 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
     r.show_progress = true;
     r.run(
         shortlink,
-        dest,
+        Some(dest),
         &Opts {
             overwrite: false,
             is_git: subcommand_matches.is_present("git"),

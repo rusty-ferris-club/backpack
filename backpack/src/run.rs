@@ -34,12 +34,12 @@ impl Runner {
     /// # Errors
     ///
     /// This function will return an error if anything in the workflow failed
-    pub fn run(&self, shortlink: &str, dest: &str, opts: &Opts) -> Result<()> {
+    pub fn run(&self, shortlink: &str, dest: Option<&str>, opts: &Opts) -> Result<()> {
         self.run_workflow(shortlink, dest, opts)
     }
 
     #[tracing::instrument(skip(self), err)]
-    fn run_workflow(&self, shortlink: &str, dest: &str, opts: &Opts) -> Result<()> {
+    fn run_workflow(&self, shortlink: &str, dest: Option<&str>, opts: &Opts) -> Result<()> {
         if self.show_progress {
             println!("🔮 Resolving...");
         }
@@ -61,15 +61,15 @@ impl Runner {
         let deployer = Deployer::default();
         let res = deployer.deploy(
             Path::new(&source),
-            Path::new(dest),
+            dest.map(Path::new),
             &location,
             &opts.mode,
             opts.overwrite,
             remove_source,
-        );
-        if res.is_ok() && self.show_progress {
-            println!("🎉 Done in: '{}'.", dest);
+        )?;
+        if self.show_progress {
+            println!("🎉 Done in: '{}'", res);
         }
-        res
+        Ok(())
     }
 }

@@ -53,27 +53,30 @@ impl Deployer {
     pub fn deploy(
         &self,
         source: &Path,
-        dest: &Path,
+        dest: Option<&Path>,
         location: &Location,
         mode: &CopyMode,
         overwrite: bool,
         remove_source: bool,
-    ) -> Result<()> {
+    ) -> Result<String> {
         // xxx: either way canonicalize paths.
         let final_source = source.join(location.subfolder.clone().unwrap_or_default());
+        let final_dest = dest
+            .or_else(|| location.subfolder.as_ref().map(Path::new))
+            .unwrap_or_else(|| Path::new("."));
         match mode {
             CopyMode::Copy => {
-                if dest.exists() {
-                    anyhow::bail!("path already exists: {}", dest.display());
+                if final_dest.exists() {
+                    anyhow::bail!("path already exists: {}", final_dest.display());
                 }
-                std::fs::create_dir_all(dest)?;
-                copy_dir(&final_source, dest, Overwrite::Always)?;
+                std::fs::create_dir_all(final_dest)?;
+                copy_dir(&final_source, final_dest, Overwrite::Always)?;
             }
             CopyMode::Apply => {
-                std::fs::create_dir_all(dest)?;
+                std::fs::create_dir_all(final_dest)?;
                 copy_dir(
                     &final_source,
-                    dest,
+                    final_dest,
                     if overwrite {
                         Overwrite::Always
                     } else {
@@ -86,7 +89,7 @@ impl Deployer {
             println!("simulate remove {}", source.display());
         }
         // copy vs apply
-        Ok(())
+        Ok(final_dest.display().to_string())
     }
 }
 
