@@ -17,10 +17,10 @@ const CONFIG_TEMPLATE: &str = r###"
 version: 1
 
 #
-# set up aliases as convenient shortcuts to your starter projects or templates.
+# set up projects as convenient shortcuts to your starter projects or templates.
 # $ backpack new rust-starter
 #
-# aliases:
+# projects:
 #   rust-starter: 
 #     shortlink: jondot/rust-starter  # you can use any custom prefix here too
 #     # is_git: true # force fetch from ssh
@@ -53,8 +53,8 @@ version: 1
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
-    #[serde(rename = "aliases", default)]
-    pub aliases: Option<HashMap<String, Alias>>,
+    #[serde(rename = "projects", default)]
+    pub projects: Option<HashMap<String, Alias>>,
 
     #[serde(rename = "vendors", default)]
     pub vendors: Option<VendorsConfig>,

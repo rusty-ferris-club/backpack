@@ -5,11 +5,14 @@
 #
 version: 1
 
+projects_external:
+- name: community
+  href: https://....
 #
-# set up aliases as convenient shortcuts to your starter projects or templates.
+# set up projects as convenient shortcuts to your starter projects or templates.
 # $ backpack new rust-starter
 #
-# aliases:
+# projects:
 #   rust-starter: 
 #     shortlink: jondot/rust-starter  # you can use any custom prefix here too
 #     # is_git: true # force fetch from ssh

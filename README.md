@@ -11,7 +11,7 @@
 <br/>
 <b>:cowboy_hat_face: be lazy: <code>$ bp new acme/starter</code></b>
 <br/>
-<b>:robot: your own aliases <code>$ bp new rust-starter</code></b>
+<b>:robot: your own projects <code>$ bp new rust-starter</code></b>
 <br/>
 <hr/>
 </p>
@@ -28,7 +28,7 @@ $ bp new user/repo
 
 :white_check_mark: A supercharged scaffolding machine   
 :white_check_mark: Grab subfolders, branches, tags from template projects    
-:white_check_mark: Personalize shortlinks and aliases for individuals and teams  
+:white_check_mark: Personalize shortlinks and projects for individuals and teams  
 :white_check_mark: Fast clone    
 :white_check_mark: Apply files into current project  
 :white_check_mark: No history or `.git` folder   
@@ -58,11 +58,11 @@ OPTIONS:
     -V, --version    Print version information
 
 SUBCOMMANDS:
-    apply     apply remote files into a folder [aliases: a]
+    apply     apply remote files into a folder [projects: a]
     cache     cache handling
     config    create custom configuration
     help      Print this message or the help of the given subcommand(s)
-    new       initialize a new project [aliases: n]
+    new       initialize a new project [projects: n]
 ```
 
 Put `bp` in an accessible bin folder:
@@ -149,9 +149,9 @@ $ bp new kriasoft/react-starter-kit --git
 ```
 ## :joystick:	Configuration
 
-`backpack` is built for teams. This means you can configure your own shortcuts (called `aliases`) to Git hosting vendors, organizations, and repos.
+`backpack` is built for teams. This means you can configure your own shortcuts (called `projects`) to Git hosting vendors, organizations, and repos.
 
-### :raising_hand_woman:	 Configuring user aliases
+### :raising_hand_woman:	 Configuring user projects
 
 If you have a template project you always use, you can give it a shortcut name, or an "alias".
 
@@ -166,10 +166,10 @@ And edit the file:
 $ code ~/.backpack/backpack.yaml
 ```
 
-To add aliases you can use the `aliases` section:
+To add projects you can use the `projects` section:
 
 ```yaml
-aliases:
+projects:
   rust-starter: 
     shortlink: rusty-ferris-club/rust-starter
 ```
@@ -180,7 +180,7 @@ And now you can use:
 $ bp new rust-starter
 ```
 
-Which will resolve to the correct location. Note: aliases will automatically resolve custom Git vendors (see below for what these are).
+Which will resolve to the correct location. Note: projects will automatically resolve custom Git vendors (see below for what these are).
 
 ### :label:	 Configuring custom Git vendors
 

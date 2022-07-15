@@ -21,12 +21,12 @@ fn expand(
     config: &Config,
 ) -> AnyResult<(Box<dyn Vendor>, Location)> {
     let (shortlink, is_git) = config
-        .aliases
+        .projects
         .as_ref()
-        .and_then(|aliases| aliases.get(shortlink))
+        .and_then(|projects| projects.get(shortlink))
         .map_or_else(
             || (shortlink, is_git),
-            |alias| (alias.shortlink.as_str(), alias.is_git.unwrap_or(false)),
+            |project| (project.shortlink.as_str(), project.is_git.unwrap_or(false)),
         );
     let vendors = Vendors::new(config);
     let (vendor, url) = if shortlink.starts_with("https://") {
@@ -125,7 +125,7 @@ mod tests {
         );
         let config = Config::from_text(
             r###"
-aliases:
+projects:
   rust-starter:
     shortlink: jondot/rust-starter
     is_git: true
