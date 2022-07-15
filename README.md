@@ -153,7 +153,7 @@ $ bp new kriasoft/react-starter-kit --git
 
 ### :raising_hand_woman:	 Configuring user projects
 
-If you have a template project you always use, you can give it a shortcut name, or an "alias".
+If you have a template project you always use, you can give it a shortcut name, or a "project".
 
 Start by generating a **global user** configuration file:
 

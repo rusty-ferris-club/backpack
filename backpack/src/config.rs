@@ -54,7 +54,7 @@ version: 1
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     #[serde(rename = "projects", default)]
-    pub projects: Option<HashMap<String, Alias>>,
+    pub projects: Option<HashMap<String, Project>>,
 
     #[serde(rename = "vendors", default)]
     pub vendors: Option<VendorsConfig>,
@@ -165,7 +165,7 @@ impl Config {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Alias {
+pub struct Project {
     #[serde(rename = "shortlink")]
     pub shortlink: String,
 
