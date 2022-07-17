@@ -31,7 +31,7 @@ pub fn command() -> Command<'static> {
                 .help("fetch resources without using the cache")
                 .takes_value(false),
         )
-        .arg(Arg::new("shortlink").required(true))
+        .arg(Arg::new("shortlink"))
         .arg(Arg::new("dest"))
 }
 
@@ -40,12 +40,12 @@ pub fn command() -> Command<'static> {
 /// interactively upon file conflict
 ///
 pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<bool> {
-    let shortlink = subcommand_matches.get_one::<String>("shortlink").unwrap();
+    let shortlink = subcommand_matches.get_one::<String>("shortlink");
     let dest = subcommand_matches.get_one::<String>("dest");
     let mut r = Runner::default();
     r.show_progress = true;
     r.run(
-        shortlink,
+        shortlink.map(String::as_str),
         dest.map(String::deref),
         &Opts {
             overwrite: subcommand_matches.is_present("overwrite"),

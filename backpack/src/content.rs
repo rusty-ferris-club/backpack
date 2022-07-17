@@ -1,6 +1,7 @@
 use crate::data::CopyMode;
 use crate::data::Location;
 use crate::data::Overwrite;
+use tracing::warn;
 use anyhow::Result;
 use dialoguer;
 use dialoguer::theme::ColorfulTheme;
@@ -86,7 +87,8 @@ impl Deployer {
             }
         }
         if remove_source {
-            println!("simulate remove {}", source.display());
+            // xxx don't remove for now
+            warn!("remove requested, but not removing '{}'", source.display());
         }
         // copy vs apply
         Ok(final_dest.display().to_string())

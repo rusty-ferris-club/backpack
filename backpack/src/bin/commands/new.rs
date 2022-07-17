@@ -30,8 +30,8 @@ pub fn command() -> Command<'static> {
                 .help("fetch resources without using the cache")
                 .takes_value(false),
         )
-        .arg(Arg::new("shortlink").required(true))
-        .arg(Arg::new("name").required(true))
+        .arg(Arg::new("shortlink"))
+        .arg(Arg::new("name"))
 }
 
 ///
@@ -39,13 +39,13 @@ pub fn command() -> Command<'static> {
 /// default dest folder
 ///
 pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<bool> {
-    let shortlink = subcommand_matches.get_one::<String>("shortlink").unwrap();
-    let dest = subcommand_matches.get_one::<String>("name").unwrap();
+    let shortlink = subcommand_matches.get_one::<String>("shortlink");
+    let dest = subcommand_matches.get_one::<String>("name");
     let mut r = Runner::default();
     r.show_progress = true;
     r.run(
-        shortlink,
-        Some(dest),
+        shortlink.map(String::as_str),
+        dest.map(String::as_str),
         &Opts {
             overwrite: false,
             is_git: subcommand_matches.is_present("git"),

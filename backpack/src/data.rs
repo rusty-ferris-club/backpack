@@ -92,7 +92,7 @@ pub enum Overwrite {
     Custom(Box<dyn Fn(&str) -> bool>),
 }
 
-#[derive(Debug)]
+#[derive(Debug ,PartialEq)]
 pub enum CopyMode {
     Copy,
     Apply,
