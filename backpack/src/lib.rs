@@ -2,6 +2,8 @@
 //#![deny(clippy::nursery)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::module_name_repetitions)]
+#![allow(clippy::use_self)]
+#![feature(path_try_exists)]
 
 pub mod config;
 pub mod content;

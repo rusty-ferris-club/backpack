@@ -1,0 +1,3 @@
+project_sources:
+  - name: custom
+    link: https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/integration-test2.yaml

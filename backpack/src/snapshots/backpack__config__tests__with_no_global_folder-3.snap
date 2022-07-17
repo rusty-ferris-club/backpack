@@ -1,0 +1,29 @@
+---
+source: backpack/src/config.rs
+expression: filled_config
+---
+(
+    Config {
+        project_sources: Some(
+            [
+                ProjectSource {
+                    name: "community",
+                    link: "https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/integration-test.yaml",
+                },
+            ],
+        ),
+        projects: Some(
+            {
+                "rust": Project {
+                    shortlink: "rusty-ferris-club",
+                    is_git: None,
+                    description: None,
+                    run: None,
+                    source: External,
+                },
+            },
+        ),
+        vendors: None,
+    },
+    Global,
+)

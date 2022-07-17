@@ -43,7 +43,7 @@ impl Runner {
         if self.show_progress {
             println!("🔮 Resolving...");
         }
-        let config = Config::load_or_default().context("could not load configuration")?;
+        let (config, _) = Config::load_or_default().context("could not load configuration")?;
 
         let sl = Shortlink::new(&config, self.git.as_ref());
         let (location, assets) = sl.resolve(shortlink, opts.is_git)?;

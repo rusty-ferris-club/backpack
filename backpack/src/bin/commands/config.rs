@@ -14,21 +14,16 @@ pub fn command() -> Command<'static> {
                 .takes_value(false),
         )
         .arg(
-            Arg::new("global")
-                .long("global")
-                .help("initialize a global configuration")
+            Arg::new("local")
+                .long("local")
+                .help("initialize local configuration")
                 .takes_value(false),
         )
         .arg(
-            Arg::new("dirs")
-                .long("dirs")
-                .help("show configuration folders")
-                .takes_value(false),
-        )
-        .arg(
-            Arg::new("show")
-                .long("show")
-                .help("show the merged config (global + local)")
+            Arg::new("sync")
+                .short('s')
+                .long("sync")
+                .help("synchronize remote config sources")
                 .takes_value(false),
         )
 }
@@ -42,21 +37,27 @@ fn print_path(kind: &str, path: &Path) {
     );
 }
 pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<bool> {
-    if subcommand_matches.is_present("show") {
-        let t = Config::load_or_default()?.to_text()?;
-        println!("{}", t);
-    } else if subcommand_matches.is_present("dirs") {
+    if subcommand_matches.is_present("sync") {
+        let (c, _) = Config::load_or_default()?;
+        c.sync(|s| {
+            println!("downloading: {}", s.name);
+        })?;
+        println!("done.");
+    } else if subcommand_matches.is_present("init") {
+        let generated = if subcommand_matches.is_present("local") {
+            Config::init_local()?
+        } else {
+            Config::init_global()?
+        };
+        println!("wrote: {}.", generated.display());
+    } else {
         let local = Config::local_config_file();
         let global = Config::global_config_file()?;
         print_path("global", global.as_path());
         print_path("local", local.as_path());
-    } else if subcommand_matches.is_present("init") {
-        let generated = if subcommand_matches.is_present("global") {
-            Config::init_global()?
-        } else {
-            Config::init_local()?
-        };
-        println!("wrote: {}.", generated.display());
+
+        let t = Config::load_or_default()?.0.to_text()?;
+        println!("{}", t);
     }
 
     Ok(true)
