@@ -4,8 +4,6 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::use_self)]
 #![allow(clippy::unused_self)]
-#![feature(path_try_exists)]
-#![feature(option_get_or_insert_default)]
 
 pub mod config;
 pub mod content;
