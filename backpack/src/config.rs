@@ -97,11 +97,11 @@ impl Config {
         Ok(conf)
     }
 
-    /// Returns the reload remote projects of this [`Config`].
+    /// Reload or load remote projects from the downloaded files for this [`Config`].
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
+    /// This function will return an error if it cannot load sources from disk
     pub fn reload_remote_projects(&mut self) -> AnyResult<()> {
         let global_folder = Self::global_config_folder()?;
         if global_folder.exists() {
@@ -184,8 +184,10 @@ impl Config {
         Self::global_config_folder().map(|c| c.join("cache"))
     }
 
-    /// Downloads remote external project sources that users has in their global configuration file.
-    /// Each source will be saved in its own file based on the source name.
+    /// Downloads remote project sources that users has in their global configuration file.
+    /// Each source is a full configuration file that exists remotely, it will be saved in
+    /// its own file based on the source name.
+    /// At time of writing we're only taking `projects` from those files.
     ///
     /// # Errors
     ///
@@ -254,12 +256,17 @@ impl Config {
         Ok(path)
     }
 
+    /// Saves this [`Config`].
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if cannot save to disk
     pub fn save(&self) -> AnyResult<()> {
         self.save_to(&Config::global_config_file()?)?;
         Ok(())
     }
 
-    /// Save configuration to a file
+    /// Save this configuration to a specified file
     ///
     /// # Errors
     ///
@@ -277,11 +284,13 @@ impl Config {
         Ok(())
     }
 
-    /// .
+    /// Reads and loads remote projects from user's global config folder, where the remote
+    /// project sources configuration have been already downloaded and cached.
+    /// You may want to call `sync` before loading, so that remote config sources are downloaded.
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
+    /// This function will return an error if cannot read from disk
     pub fn load_remote_projects(
         &self,
         global_folder: &Path,
@@ -306,12 +315,14 @@ impl Config {
         })
     }
 
-    /// .
+    /// Loads a remote config source directly. Will add it to current configuration,
+    /// sync it (download), and load it (read the downloaded material from disk into
+    /// this configuration).
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
-    pub fn load_remote_source(&mut self, url: &str) -> AnyResult<usize> {
+    /// This function will return an error if it cannot download or read from disk
+    pub fn fetch_and_load_remote_projects(&mut self, url: &str) -> AnyResult<usize> {
         self.add_project_source("remote", url);
         let res = self.sync(|_| {})?;
         self.reload_remote_projects()?;
@@ -325,6 +336,7 @@ impl Config {
         };
         self.project_sources.get_or_insert(Vec::new()).push(ps);
     }
+
     /// Adds projects from external project sources that are configured and exists on disk.
     ///
     /// # Errors
@@ -641,7 +653,7 @@ project_sources:
 
         assert!(!folder.exists());
         assert!(!folder.join("remote.yaml").exists());
-        config.load_remote_source("https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/integration-test.yaml").unwrap();
+        config.fetch_and_load_remote_projects("https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/integration-test.yaml").unwrap();
         assert!(folder.exists());
         assert!(folder.join("remote.yaml").exists());
         assert_debug_snapshot!(config);

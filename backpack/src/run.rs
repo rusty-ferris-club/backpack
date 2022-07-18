@@ -45,7 +45,7 @@ impl Runner {
 
         // optionally add remote and sync here if remote exists
         if let Some(remote) = opts.remote.as_ref() {
-            let num = config.load_remote_source(remote.as_str())?;
+            let num = config.fetch_and_load_remote_projects(remote.as_str())?;
             let prompt = Prompt::new(&config);
             if prompt.confirm_save_remotes(num)? {
                 config.save()?;

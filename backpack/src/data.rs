@@ -93,7 +93,7 @@ pub enum Overwrite {
     Custom(Box<dyn Fn(&str) -> bool>),
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum CopyMode {
     #[serde(rename = "new")]
     Copy,

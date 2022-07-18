@@ -49,7 +49,9 @@ pub fn command() -> Command<'static> {
 pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<bool> {
     let shortlink = subcommand_matches.get_one::<String>("shortlink");
     let dest = subcommand_matches.get_one::<String>("dest");
-    let remote = subcommand_matches.get_one::<String>("remote").map(String::to_string);
+    let remote = subcommand_matches
+        .get_one::<String>("remote")
+        .map(String::to_string);
 
     let mut r = Runner::default();
     r.show_progress = true;
