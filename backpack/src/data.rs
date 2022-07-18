@@ -1,5 +1,6 @@
 use anyhow::Result as AnyResult;
 use core::fmt::Debug;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Clone, Debug)]
@@ -92,8 +93,12 @@ pub enum Overwrite {
     Custom(Box<dyn Fn(&str) -> bool>),
 }
 
-#[derive(Debug ,PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CopyMode {
+    #[serde(rename = "new")]
     Copy,
+    #[serde(rename = "apply")]
     Apply,
+    #[serde(rename = "all")]
+    All,
 }

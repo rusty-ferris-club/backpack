@@ -1,3 +1,4 @@
+use crate::data::CopyMode;
 use crate::merge;
 use anyhow::{anyhow, bail, Context, Result as AnyResult};
 use dirs;
@@ -92,12 +93,22 @@ impl Config {
     #[tracing::instrument(name = "config_load", skip_all, err)]
     pub fn load(text: &str) -> AnyResult<Self> {
         let mut conf: Self = Self::from_text(text)?;
+        conf.reload_remote_projects()?;
+        Ok(conf)
+    }
+
+    /// Returns the reload remote projects of this [`Config`].
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub fn reload_remote_projects(&mut self) -> AnyResult<()> {
         let global_folder = Self::global_config_folder()?;
         if global_folder.exists() {
-            let remote_projects = conf.load_remote_projects(&global_folder)?;
-            conf.add_project_sources(&remote_projects)?;
+            let remote_projects = self.load_remote_projects(&global_folder)?;
+            self.add_remote_projects(&remote_projects)?;
         }
-        Ok(conf)
+        Ok(())
     }
 
     #[tracing::instrument(name = "config_load", skip_all, err)]
@@ -179,7 +190,7 @@ impl Config {
     /// # Errors
     ///
     /// This function will return an error if a network error or serialization error has occured.
-    pub fn sync<F>(&self, progress: F) -> AnyResult<Vec<(String, Config)>>
+    pub fn sync<F>(&self, progress: F) -> AnyResult<Vec<(String, Self)>>
     where
         F: Fn(&ProjectSource),
     {
@@ -243,6 +254,11 @@ impl Config {
         Ok(path)
     }
 
+    pub fn save(&self) -> AnyResult<()> {
+        self.save_to(&Config::global_config_file()?)?;
+        Ok(())
+    }
+
     /// Save configuration to a file
     ///
     /// # Errors
@@ -289,12 +305,32 @@ impl Config {
                 .collect::<AnyResult<Vec<_>>>()
         })
     }
+
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub fn load_remote_source(&mut self, url: &str) -> AnyResult<usize> {
+        self.add_project_source("remote", url);
+        let res = self.sync(|_| {})?;
+        self.reload_remote_projects()?;
+        Ok(res.len())
+    }
+
+    pub fn add_project_source(&mut self, name: &str, link: &str) {
+        let ps = ProjectSource {
+            name: name.to_string(),
+            link: link.to_string(),
+        };
+        self.project_sources.get_or_insert(Vec::new()).push(ps);
+    }
     /// Adds projects from external project sources that are configured and exists on disk.
     ///
     /// # Errors
     ///
     /// This function will return an error if a source is configured but was not sync'd yet
-    pub fn add_project_sources(
+    pub fn add_remote_projects(
         &mut self,
         remote_projects: &[(String, Option<ProjectMap>)],
     ) -> AnyResult<()> {
@@ -310,6 +346,23 @@ impl Config {
         }
         self.projects = Some(projects);
         Ok(())
+    }
+
+    pub fn projects_for_selection(&self, mode: &CopyMode) -> Vec<(&String, &Project)> {
+        self.projects
+            .as_ref()
+            .map(|ps| {
+                ps.iter()
+                    .filter(|t| {
+                        CopyMode::All.eq(mode)
+                            || t.1
+                                .mode
+                                .as_ref()
+                                .map_or(true, |m| CopyMode::All.eq(m) || m.eq(mode))
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
     }
 }
 
@@ -357,6 +410,9 @@ pub struct Project {
     #[serde(rename = "source")]
     #[serde(default)]
     pub source: ProjectSourceKind,
+
+    #[serde(rename = "mode")]
+    pub mode: Option<CopyMode>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -385,6 +441,27 @@ mod tests {
     /*
     what happens if i have local project, and remote project overwriting it?
      */
+
+    #[test]
+    fn test_selection_filtering() {
+        let config = Config::from_text(
+            r###"
+projects:
+   copy_only: 
+     shortlink: jondot/one
+     mode: new
+   apply_only: 
+     shortlink: jondot/two
+     mode: apply
+   all: 
+     shortlink: jondot/three
+"###,
+        )
+        .unwrap();
+        assert_debug_snapshot!(config.projects_for_selection(&CopyMode::Copy));
+        assert_debug_snapshot!(config.projects_for_selection(&CopyMode::Apply));
+        assert_debug_snapshot!(config.projects_for_selection(&CopyMode::All));
+    }
 
     #[test]
     #[serial]
@@ -546,5 +623,27 @@ project_sources:
         fs::remove_file(&f).unwrap();
 
         assert_debug_snapshot!(res);
+    }
+
+    #[test]
+    #[serial]
+    fn test_load_remote_projects() {
+        env::set_var("BP_FOLDER", ".backpack-test-ars");
+        env::remove_var("BP_CONF");
+
+        let mut config = Config::default();
+
+        let folder = Config::global_config_folder().unwrap();
+        assert!(folder.ends_with(".backpack-test-ars"));
+        if folder.exists() {
+            fs::remove_dir_all(&folder).unwrap();
+        }
+
+        assert!(!folder.exists());
+        assert!(!folder.join("remote.yaml").exists());
+        config.load_remote_source("https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/integration-test.yaml").unwrap();
+        assert!(folder.exists());
+        assert!(folder.join("remote.yaml").exists());
+        assert_debug_snapshot!(config);
     }
 }

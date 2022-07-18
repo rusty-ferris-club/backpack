@@ -1,4 +1,5 @@
 use crate::config::{Config, Project};
+use crate::data::CopyMode;
 use anyhow::{anyhow, Result as AnyResult};
 use console::style;
 use dialoguer::theme::{ColorfulTheme, Theme};
@@ -23,28 +24,39 @@ impl<'a> Prompt<'a> {
     /// # Errors
     ///
     /// This function will return an error if interaction is killed
-    pub fn pick_project(&self) -> AnyResult<Option<&Project>> {
+    pub fn pick_project(&self, mode: &CopyMode) -> AnyResult<Option<&Project>> {
         // accept free input, user wants to input a shortlink directly
         // display where each project comes from
         // impl pick dest, where we do a "my-project" and 1,2,3,4 if exists.
         // add a final confirmation with the data
         // move all UI stuff into prompt
-        match self.config.projects.as_ref() {
-            Some(projects) => {
-                let options = projects.keys().collect::<Vec<_>>();
+        match self.config.projects_for_selection(mode) {
+            projects if !projects.is_empty() => {
+                let options = projects
+                    .iter()
+                    .map(|(k, p)| {
+                        format!(
+                            "{} ({})",
+                            k,
+                            p.mode.as_ref().map_or("all", |m| if CopyMode::Apply.eq(m) {
+                                "apply"
+                            } else {
+                                "new"
+                            })
+                        )
+                    })
+                    .collect::<Vec<_>>();
                 let selection = FuzzySelect::with_theme(self.theme.as_ref())
                     .with_prompt("📦 Project (esc for shortlink)")
                     .default(0)
                     .items(&options)
                     .interact_opt()?;
                 match selection {
-                    Some(s) if s < options.len() => {
-                        Ok(options.get(s).and_then(|name| projects.get(*name)))
-                    }
+                    Some(s) if s < options.len() => Ok(projects.get(s).map(|(_, p)| *p)),
                     _ => Ok(None),
                 }
             }
-            None => Ok(None),
+            _ => Ok(None),
         }
     }
     /// Returns the input shortlink of this [`Prompt`].
@@ -78,6 +90,22 @@ impl<'a> Prompt<'a> {
         }
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub fn confirm_save_remotes(&self, num_remotes: usize) -> AnyResult<bool> {
+        Ok(Confirm::with_theme(self.theme.as_ref())
+            .with_prompt(format!(
+                "✨ Found {}{}",
+                style(num_remotes).yellow(),
+                style(" remote(s). Would you like to save to your configuration?").bold(),
+            ))
+            .default(false)
+            .interact()?)
+    }
+
     /// Returns the input shortlink of this [`Prompt`].
     ///
     /// # Errors
@@ -86,9 +114,11 @@ impl<'a> Prompt<'a> {
     pub fn are_you_sure(&self, shortlink: &str, dest: Option<&str>) -> AnyResult<bool> {
         Ok(Confirm::with_theme(self.theme.as_ref())
             .with_prompt(format!(
-                "🕺 Generate from {} into {}?",
+                "🕺 Generate from {} {} {}{}",
                 style(shortlink).yellow(),
-                style(dest.unwrap_or("a default folder")).yellow()
+                style("into").bold(),
+                style(dest.unwrap_or("a default folder")).bold().yellow(),
+                style("?").bold(),
             ))
             .default(true)
             .interact()?)

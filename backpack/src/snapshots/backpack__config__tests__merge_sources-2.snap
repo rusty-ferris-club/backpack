@@ -16,6 +16,7 @@ Ok(
                             description: None,
                             run: None,
                             source: External,
+                            mode: None,
                         },
                     },
                 ),
@@ -34,6 +35,7 @@ Ok(
                             description: None,
                             run: None,
                             source: External,
+                            mode: None,
                         },
                         "rust": Project {
                             shortlink: "rusty-ferris-club",
@@ -41,6 +43,7 @@ Ok(
                             description: None,
                             run: None,
                             source: External,
+                            mode: None,
                         },
                     },
                 ),

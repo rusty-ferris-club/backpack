@@ -20,6 +20,7 @@ expression: config_fully_loaded
                     description: None,
                     run: None,
                     source: Local,
+                    mode: None,
                 },
             },
         ),

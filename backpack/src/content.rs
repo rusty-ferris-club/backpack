@@ -1,12 +1,12 @@
 use crate::data::CopyMode;
 use crate::data::Location;
 use crate::data::Overwrite;
-use tracing::warn;
 use anyhow::Result;
 use dialoguer;
 use dialoguer::theme::ColorfulTheme;
 use std::fs;
 use std::path::Path;
+use tracing::warn;
 use walkdir;
 
 #[derive(Default)]
@@ -85,6 +85,7 @@ impl Deployer {
                     },
                 )?;
             }
+            CopyMode::All => {}
         }
         if remove_source {
             // xxx don't remove for now

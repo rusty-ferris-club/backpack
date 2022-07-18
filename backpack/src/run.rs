@@ -14,6 +14,7 @@ pub struct Opts {
     pub mode: CopyMode,
     pub is_git: bool,
     pub no_cache: bool,
+    pub remote: Option<String>,
 }
 pub struct Runner {
     git: Box<dyn GitProvider>,
@@ -40,14 +41,25 @@ impl Runner {
 
     #[tracing::instrument(skip(self), err)]
     fn run_workflow(&self, shortlink: Option<&str>, dest: Option<&str>, opts: &Opts) -> Result<()> {
-        let (config, _) = Config::load_or_default().context("could not load configuration")?;
+        let (mut config, _) = Config::load_or_default().context("could not load configuration")?;
+
+        // optionally add remote and sync here if remote exists
+        if let Some(remote) = opts.remote.as_ref() {
+            let num = config.load_remote_source(remote.as_str())?;
+            let prompt = Prompt::new(&config);
+            if prompt.confirm_save_remotes(num)? {
+                config.save()?;
+            }
+        }
+
+        let config = config;
         let prompt = Prompt::new(&config);
         let should_confirm = shortlink.is_none() || dest.is_none();
 
         let (is_git, shortlink) = match shortlink {
             Some(s) => (opts.is_git, s.to_string()),
             None => {
-                let project = prompt.pick_project()?;
+                let project = prompt.pick_project(&opts.mode)?;
                 if let Some(project) = project {
                     (
                         project.is_git.unwrap_or(false),

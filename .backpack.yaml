@@ -5,9 +5,9 @@
 #
 version: 1
 
-projects_external:
-- name: community
-  href: https://....
+# projects_external:
+# - name: community
+#   href: https://....
 #
 # set up projects as convenient shortcuts to your starter projects or templates.
 # $ backpack new rust-starter
@@ -15,7 +15,13 @@ projects_external:
 # projects:
 #   rust-starter: 
 #     shortlink: jondot/rust-starter  # you can use any custom prefix here too
-#     # is_git: true # force fetch from ssh
+#     mode: new
+#   rust-ci: 
+#     shortlink: jondot/rust-starter/-/.github  # you can use any custom prefix here too
+#     mode: apply
+#   react: 
+#     shortlink: foobar  # you can use any custom prefix here too
+#
 #
 
 #
