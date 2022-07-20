@@ -3,16 +3,7 @@
 <br/>
 <br/>
    <img src="media/backpack-light.svg" width="300"/>
-<br/>
-<br/>
 </p>
-<p align="center">
-<b>:white_check_mark: clone template projects easily</b>
-<br/>
-<b>:cowboy_hat_face: be lazy: <code>$ bp new acme/starter</code></b>
-<br/>
-<b>:robot: your own projects <code>$ bp new rust-starter</code></b>
-<br/>
 <hr/>
 </p>
 
@@ -44,7 +35,7 @@ For macOS:
 brew tap rusty-ferris-club/tap && brew install backpack
 ```
 
-Otherwise, grab a release from [releases](https://github.com/rusty-ferris-club/backpack/releases) and run help:
+Otherwise, grab a release from [releases](https://github.com/rusty-ferris-club/backpack/releases) and run `bp --help`:
 ```
 $ bp --help
 backpack 1.0.0
@@ -65,24 +56,14 @@ SUBCOMMANDS:
     new       initialize a new project [projects: n]
 ```
 
-Put `bp` in an accessible bin folder:
 
-```
-mv ~/Downloads/bp ~/your-bins-folder/bp
-```
+# :hammer: Using Backpack
 
-Assuming `your-bins-folder` is in your `$PATH`, you should have this working:
+`bp` scaffolds [projects](https://github.com/topics/template) for you, or copies parts of a project using **shortlinks**, which is a quick and easy way to describe repos and files to copy from them.
 
-```
-$ which bp
-/Users/user/your-bins-folder/bp
-```
+You can also save a list of your favorite projects to use as shortcuts.
 
-## :hammer: Using Backpack
-
-The goal of `backpack` is to give you an easy tool for scaffolding [new projects](https://github.com/topics/template) from **existing repos**. It's optimized for laziness so you can specify a **shortlink** :).
-
-### :link: What's a shortlink?
+## :link: What's a shortlink?
 
 A shortlink is a pointer to a Git repo which looks like this:
 
@@ -97,17 +78,32 @@ user/repo/-/subfolder -> takes only 'subfolder'
 user/repo#wip -> takes the 'wip' branch
 ```
 
-PS: You can customize the `gl:` prefix (or any other prefix) to resolve to what ever you want.
-### :building_construction:	 Scaffolding new projects
+:white_check_mark: Bare minimum is `user/repo` which defaults to Github.  
+:white_check_mark: You can set up a custom prefix if you want.  
 
-Run:
+## :speedboat: Scaffolding interactively
+
+```
+$ bp new
+or
+$ bp apply
+```
+
+And follow the interactive menu, which will let you:
+
+* Pick a project, if you have any configured
+* Input a shortlink
+* Input a destination or pick an auto generated one
+
+## :building_construction:	 Scaffolding new projects
+
 
 ```
 $ bp new kriasoft/react-starter-kit my-react-project
 ```
 
 
-:white_check_mark: Uses `new` to create **a new project**   
+:white_check_mark: Use `new` to create **a new project**  into `my-react-project` 
 :white_check_mark: Resolves to [https://github.com/kriasoft/react-starter-kit](https://github.com/kriasoft/react-starter-kit)    
 :white_check_mark: Finds the default branch, downloads it and caches locally. Next time you run, it'll be much faster.    
 
@@ -119,7 +115,7 @@ $ git init .
 $ yarn
 ```
 
-### :arrow_right_hook:	 Applying templates to existing projects
+## :arrow_right_hook:	 Applying templates to existing projects
 
 Let's say you really like how `react-starter-kit` configured its Github Action, and you'd like to copy that to your **existing project**. You can do this:
 
@@ -131,7 +127,7 @@ $ bp apply kriasoft/react-starter-kit/-/.github
 :white_check_mark: Use `/-/` to access a subfolder   
 :white_check_mark: Use `apply` to overlay files onto your current working directory    
 
-### :evergreen_tree:	 Using branches
+## :evergreen_tree:	 Using branches
 
 Branches or tags can be used with the `#branch` specifier.
 
@@ -140,18 +136,18 @@ Branches or tags can be used with the `#branch` specifier.
 $ bp new kriasoft/react-starter-kit#feature/redux my-starter
 ```
 
-### :woman_technologist: Using `git` for private repos
+## :woman_technologist: Using `git` for private repos
 
 For **private repos**, you might want to download over Git SSH protocol, add `--git` to your commands:
 
 ```
 $ bp new kriasoft/react-starter-kit --git
 ```
-## :joystick:	Configuration
+# :joystick:	Configuration
 
 `backpack` is built for teams. This means you can configure your own shortcuts (called `projects`) to Git hosting vendors, organizations, and repos.
 
-### :raising_hand_woman:	 Configuring user projects
+## :raising_hand_woman:	 Configuring user projects
 
 If you have a template project you always use, you can give it a shortcut name, or a "project".
 
@@ -174,6 +170,17 @@ projects:
     shortlink: rusty-ferris-club/rust-starter
 ```
 
+
+For projects that are **either** new scaffolds or those which want to take components from, you can specify the mode to show the correct list in the interactive wizard:
+
+
+```yaml
+projects:
+  rust-starter: 
+    shortlink: rusty-ferris-club/rust-starter
+    mode: apply # or new, or remove property.
+```
+
 And now you can use:
 
 ```
@@ -182,7 +189,25 @@ $ bp new rust-starter
 
 Which will resolve to the correct location. Note: projects will automatically resolve custom Git vendors (see below for what these are).
 
-### :label:	 Configuring custom Git vendors
+## :link: Using remote project sources
+You can create a configuration of favorite projects and put it online, to share with your team or save for yourself. Then:
+
+```
+$ bp new -r https://<url to YAML>
+```
+
+```yaml
+# file content:
+projects:
+  rust:
+    shortlink: rusty-ferris-club/rust-starter
+```
+
+
+Running with this remote will show you through the available projects and also offer to save the source in your configuration.
+
+Here's a [an example](https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/main.yaml) from our own [backpack-tap](https://github.com/rusty-ferris-club/backpack-tap) repo.
+## :label:	 Configuring custom Git vendors
 
 Start by generating a **project-local** configuration file:
 
@@ -217,6 +242,77 @@ $ bp config --init --global
 ```
 
 
+# FAQ
+
+### Is it possible to use backpack only on parts of source repos?
+
+Yes, use the folder notation `/-/`:
+
+```
+$ bp new user/repo/-/path/to/folder dest-folder
+```
+
+### How do I update projects or remove cache?
+
+Use `bp cache` to manage cached versions. Remove your cache to force updates:
+
+```
+$ bp cache --rm
+```
+To show your cache, use:
+
+```
+$ bp cache --path
+```
+
+### Can I use backpack on empty or populated directories?
+
+Yes. Use `apply` to grab content and apply it to an existing empty or populated directories:
+
+```
+$ cd your-directory
+$ bp apply user/repo .
+```
+
+### Can backpack work on self hosted Git servers?
+
+If it's one of the supported vendors, you can create a custom prefix configuration:
+
+```yaml
+vendors:
+  custom:
+    gh:
+      kind: github
+      base: github.acme.com/my-org
+```
+
+Note that in addition to the custom hosted `github.acme.com` server, we also specified a default org `my-org` above, so it saves a bit of typing. Then you can run:
+
+```
+$ bp new gh:my-repo my-repo
+```
+
+### Can backpack infer the name of the destination folder and save me some more typing?
+
+Where it's non ambiguous, yes. For example, when you specify a subfolder:
+
+```
+$ bp new user/repo/-/my-folder
+```
+
+Will grab just `my-folder` from `user/repo` and create in a destinaton folder called `my-folder`.
+
+If there's a inference strategy you think will work, open an issue or submit a PR.
+
+### How to install backpack globally?
+
+With `Homebrew` it happens automatically. Otherwise, download a binary and add its containing folder to your `PATH` in the way that's supported by your OS.
+
+We're accepting PRs for other OS specific installers.
+
+### Any requirements or dependencies for backpack?
+
+Just `git` to exist (and we will eventually remove that dependency). Other than that the `bp` binary is self contained and has no dependencies.
 
 # Thanks
 
