@@ -1,4 +1,4 @@
-use std::{env, fs, path::PathBuf};
+use std::{env, fs};
 
 use backpack::config::Config;
 use backpack::data::CopyMode;
@@ -18,18 +18,19 @@ fn ensure_no_config() {
     }
 }
 
-fn list_folder(dest: &str) -> Vec<PathBuf> {
+fn list_folder(dest: &str) -> Vec<String> {
     let mut r = WalkDir::new(dest)
         .into_iter()
         .filter_map(Result::ok)
         .filter(|file| file.metadata().unwrap().is_file())
         .map(DirEntry::into_path)
+        .map(|p| p.to_string_lossy().replace('\\', "/"))
         .collect::<Vec<_>>();
     r.sort();
     r
 }
 
-fn run(shortlink: Option<&str>, dest: Option<&str>, mode: CopyMode) -> Vec<PathBuf> {
+fn run(shortlink: Option<&str>, dest: Option<&str>, mode: CopyMode) -> Vec<String> {
     let tests_out = "tests-out";
     fs::remove_dir_all(tests_out).ok();
     fs::create_dir(tests_out).unwrap();
@@ -56,7 +57,7 @@ fn run(shortlink: Option<&str>, dest: Option<&str>, mode: CopyMode) -> Vec<PathB
     list_folder(tests_out)
 }
 
-fn run_with_no_config(shortlink: Option<&str>, dest: Option<&str>, mode: CopyMode) -> Vec<PathBuf> {
+fn run_with_no_config(shortlink: Option<&str>, dest: Option<&str>, mode: CopyMode) -> Vec<String> {
     ensure_no_config();
     run(shortlink, dest, mode)
 }
