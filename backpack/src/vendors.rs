@@ -42,6 +42,7 @@ impl<'a> Vendors<'a> {
     fn lookup_table(token: &str, base: Option<&str>) -> AnyResult<Box<dyn Vendor>> {
         match token {
             "gh" | "github.com" | "github" => Ok(Box::new(Github::new(base))),
+            "gist.github.com" | "gist" => Ok(Box::new(GithubGist::new(base))),
             "gl" | "gitlab.com" | "gitlab" => Ok(Box::new(Gitlab::new(base))),
             "bb" | "bitbucket.org" | "bitbucket" => Ok(Box::new(BitBucket::new(base))),
             _ => anyhow::bail!("no vendor found for: {}", token),
@@ -67,6 +68,10 @@ impl Debug for dyn Vendor {
         write!(f, "{}", self.base())
     }
 }
+
+// add gist vendor
+// the new release should include single file support + gist
+// find a way to test single file cloning
 
 pub struct Github {
     base: String,
@@ -95,6 +100,52 @@ impl Vendor for Github {
                         self.base(),
                         location.path,
                         gref,
+                    ),
+                    root: ArchiveRoot::FirstFolder,
+                }),
+                git: Some(format!(
+                    "git@{}:{}.git",
+                    self.base(),
+                    location.path.trim_start_matches('/')
+                )),
+            },
+        ))
+    }
+}
+
+pub struct GithubGist {
+    base: String,
+}
+
+impl GithubGist {
+    pub fn new(base: Option<&str>) -> Self {
+        Self {
+            base: base.map_or_else(|| "gist.github.com".to_string(), ToString::to_string),
+        }
+    }
+}
+impl Vendor for GithubGist {
+    fn base(&self) -> &str {
+        self.base.as_str()
+    }
+    #[tracing::instrument(name = "github_gist_resolve", skip_all, err)]
+    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<(Location, Assets)> {
+        let refs = git.ls_remote(location)?;
+        let head = refs
+            .iter()
+            .find(|r| r.ref_ == "HEAD")
+            .ok_or_else(|| anyhow::anyhow!("no HEAD ref found"))?;
+
+        Ok((
+            location.clone(),
+            Assets {
+                archive: Some(Archive {
+                    url: format!(
+                        //   https://gist.github.com/jondot/15086f59dab44f30bb10f82ca09f4887/archive/44a751f50ea93f92c2bc6332e4de770429862888.zip
+                        "https://{}{}/archive/{}.tar.gz",
+                        self.base(),
+                        location.path,
+                        head.ref_,
                     ),
                     root: ArchiveRoot::FirstFolder,
                 }),

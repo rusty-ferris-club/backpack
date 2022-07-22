@@ -314,6 +314,38 @@ We're accepting PRs for other OS specific installers.
 
 Just `git` to exist (and we will eventually remove that dependency). Other than that the `bp` binary is self contained and has no dependencies.
 
+### Can I get a single file?
+
+Yes. `backpack` will act differently when the source is a file, it will do what you're expecting it to.
+
+For example, this will give you a `.gitignore` file from another project:
+
+```
+$ cd my-project
+$ bp apply rusty-ferris-club/backpack/-/.gitignore
+$ tree
+.gitignore
+```
+
+This will copy just a single workflow file, but also the entire hierarchy of folders:
+
+```
+$ cd my-project
+$ bp apply rusty-ferris-club/backpack/-/.github/workflows/build.yml
+$ tree
+.github/
+  workflows/
+    build.yml
+```
+
+
+Or in other words:
+
+1. When you specify a target file verbatim, it will use that
+2. If you're not specifying a target file, the destination file and folder path will be copied from the source.
+
+
+
 # Thanks
 
 To all [Contributors](https://github.com/rusty-ferris-club/backpack/graphs/contributors) - you make this happen, thanks!

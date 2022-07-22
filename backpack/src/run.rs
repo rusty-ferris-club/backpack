@@ -8,12 +8,15 @@ use crate::shortlink::Shortlink;
 use anyhow::{Context, Result};
 use std::path::Path;
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug)]
 pub struct Opts {
     pub overwrite: bool,
     pub mode: CopyMode,
     pub is_git: bool,
     pub no_cache: bool,
+    pub no_dest_input: bool,
+    pub always_yes: bool,
     pub remote: Option<String>,
 }
 pub struct Runner {
@@ -56,6 +59,8 @@ impl Runner {
         let prompt = Prompt::new(&config);
         let should_confirm = shortlink.is_none() || dest.is_none();
 
+        // XXX: make prompt run the entire wizard flow with 1 method call
+        // pick project, then maybe shortlink wizard
         let (is_git, shortlink) = match shortlink {
             Some(s) => (opts.is_git, s.to_string()),
             None => {
@@ -72,12 +77,23 @@ impl Runner {
             }
         };
 
+        // pick destination
         let dest = dest.map_or_else(
-            || prompt.input_dest(opts.mode == CopyMode::Copy),
+            || {
+                if opts.no_dest_input {
+                    Ok(None)
+                } else {
+                    prompt.input_dest(opts.mode == CopyMode::Copy)
+                }
+            },
             |d| Ok(Some(d.to_string())),
         )?;
 
-        if should_confirm && !prompt.are_you_sure(&shortlink, dest.as_deref())? {
+        // confirm
+        if !opts.always_yes
+            && should_confirm
+            && !prompt.are_you_sure(&shortlink, dest.as_deref())?
+        {
             return Ok(());
         }
 

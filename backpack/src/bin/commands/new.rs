@@ -61,6 +61,8 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
             overwrite: false,
             is_git: subcommand_matches.is_present("git"),
             no_cache: subcommand_matches.is_present("no-cache"),
+            no_dest_input: false,
+            always_yes: false,
             remote,
             mode: CopyMode::Copy,
         },

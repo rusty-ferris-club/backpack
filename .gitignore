@@ -4,6 +4,7 @@
 debug/
 target/
 coverage/
+tests-out/
 
 # Add Cargo.lock to gitignore if creating a library
 # More information here https://doc.rust-lang.org/cargo/guide/cargo-toml-vs-cargo-lock.html

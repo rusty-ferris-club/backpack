@@ -37,9 +37,6 @@ impl Location {
     /// This function will return an error if `url` is illegal
     pub fn from(url: &Url, is_git: bool) -> AnyResult<Self> {
         let path = url.path();
-        if path.split('/').filter(|s| !s.is_empty()).count() < 2 {
-            anyhow::bail!("cannot find a project in: {}", path);
-        }
         let parts = path.split("/-/").collect::<Vec<_>>();
         let (path, subfolder) = if parts.len() == 2 {
             (parts[0], Some(parts[1].to_string()))
