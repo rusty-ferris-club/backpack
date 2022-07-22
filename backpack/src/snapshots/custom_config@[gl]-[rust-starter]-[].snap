@@ -1,0 +1,25 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, false, &config))"
+---
+(
+    "gl:rust-starter",
+    Ok(
+        (
+            gitlab.com,
+            Location {
+                url: "https://gitlab.com/rust-starter",
+                domain: "gitlab.com",
+                path: "/rust-starter",
+                project: "rust-starter",
+                port: None,
+                query: None,
+                subfolder: None,
+                gref: None,
+                username: "",
+                password: None,
+                is_git: false,
+            },
+        ),
+    ),
+)

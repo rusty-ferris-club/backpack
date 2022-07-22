@@ -1,0 +1,25 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, false, &config))"
+---
+(
+    "ghe:rust-starter",
+    Ok(
+        (
+            github.enterprise.example.com,
+            Location {
+                url: "https://github.enterprise.example.com/rust-starter",
+                domain: "github.enterprise.example.com",
+                path: "/rust-starter",
+                project: "rust-starter",
+                port: None,
+                query: None,
+                subfolder: None,
+                gref: None,
+                username: "",
+                password: None,
+                is_git: false,
+            },
+        ),
+    ),
+)

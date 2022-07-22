@@ -1,0 +1,10 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, false, &config))"
+---
+(
+    "my-vendor:jondot/hygen",
+    Err(
+        "no vendor found for: my-vendor",
+    ),
+)

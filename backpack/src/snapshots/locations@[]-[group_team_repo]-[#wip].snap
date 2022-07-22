@@ -1,0 +1,27 @@
+---
+source: backpack/src/shortlink.rs
+expression: "(link.clone(), expand(&link, false, &config))"
+---
+(
+    "group/team/repo#wip",
+    Ok(
+        (
+            github.com,
+            Location {
+                url: "https://github.com/group/team/repo#wip",
+                domain: "github.com",
+                path: "/group/team/repo",
+                project: "repo",
+                port: None,
+                query: None,
+                subfolder: None,
+                gref: Some(
+                    "wip",
+                ),
+                username: "",
+                password: None,
+                is_git: false,
+            },
+        ),
+    ),
+)

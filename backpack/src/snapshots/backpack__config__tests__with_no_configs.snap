@@ -1,0 +1,7 @@
+---
+source: backpack/src/config.rs
+expression: res
+---
+Ok(
+    [],
+)

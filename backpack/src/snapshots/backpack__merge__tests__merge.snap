@@ -1,0 +1,16 @@
+---
+source: backpack/src/merge.rs
+expression: "merge(&left, &right).unwrap()"
+---
+is_root: false
+folders:
+  - name: /var/log
+    num_files: 20
+entries:
+  /var/log/f1:
+    name: f1
+    size: 12
+  /var/log/f2:
+    name: f2
+    size: 5
+
