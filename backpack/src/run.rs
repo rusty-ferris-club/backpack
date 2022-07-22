@@ -59,35 +59,7 @@ impl Runner {
         let prompt = Prompt::new(&config);
         let should_confirm = shortlink.is_none() || dest.is_none();
 
-        // XXX: make prompt run the entire wizard flow with 1 method call
-        // pick project, then maybe shortlink wizard
-        let (is_git, shortlink) = match shortlink {
-            Some(s) => (opts.is_git, s.to_string()),
-            None => {
-                let project = prompt.pick_project(&opts.mode)?;
-                if let Some(project) = project {
-                    (
-                        project.is_git.unwrap_or(false),
-                        project.shortlink.to_string(),
-                    )
-                } else {
-                    let shortlink = prompt.input_shortlink()?;
-                    (opts.is_git, shortlink)
-                }
-            }
-        };
-
-        // pick destination
-        let dest = dest.map_or_else(
-            || {
-                if opts.no_dest_input {
-                    Ok(None)
-                } else {
-                    prompt.input_dest(opts.mode == CopyMode::Copy)
-                }
-            },
-            |d| Ok(Some(d.to_string())),
-        )?;
+        let (is_git, shortlink, dest) = prompt.fill_missing(shortlink, dest, opts)?;
 
         // confirm
         if !opts.always_yes
