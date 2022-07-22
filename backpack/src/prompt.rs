@@ -1,5 +1,6 @@
 use crate::config::{Config, Project};
 use crate::data::CopyMode;
+use crate::run::Opts;
 use anyhow::{anyhow, Result as AnyResult};
 use console::style;
 use dialoguer::theme::{ColorfulTheme, Theme};
@@ -17,6 +18,46 @@ impl<'a> Prompt<'a> {
             config,
             theme: Box::new(ColorfulTheme::default()),
         }
+    }
+
+    /// Fill in missing arguments with a wizard
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if prompting fails
+    pub fn fill_missing(
+        &self,
+        shortlink: Option<&str>,
+        dest: Option<&str>,
+        opts: &Opts,
+    ) -> AnyResult<(bool, String, Option<String>)> {
+        let (is_git, shortlink) = match shortlink {
+            Some(s) => (opts.is_git, s.to_string()),
+            None => {
+                let project = self.pick_project(&opts.mode)?;
+                if let Some(project) = project {
+                    (
+                        project.is_git.unwrap_or(false),
+                        project.shortlink.to_string(),
+                    )
+                } else {
+                    let shortlink = self.input_shortlink()?;
+                    (opts.is_git, shortlink)
+                }
+            }
+        };
+        let dest = dest.map_or_else(
+            || {
+                if opts.no_dest_input {
+                    Ok(None)
+                } else {
+                    self.input_dest(opts.mode == CopyMode::Copy)
+                }
+            },
+            |d| Ok(Some(d.to_string())),
+        )?;
+
+        Ok((is_git, shortlink, dest))
     }
 
     /// Returns the pick project of this [`Prompt`].

@@ -1,0 +1,10 @@
+---
+source: backpack/tests/runner_test.rs
+expression: "run_with_no_config(Some(\"rusty-ferris-club/backpack-e2e-frozen/-/.github\"),\n    Some(\"out\"), CopyMode::Copy)"
+---
+[
+    "tests-out/out/ISSUE_TEMPLATE/bug_report.yml",
+    "tests-out/out/ISSUE_TEMPLATE/feature_request.yml",
+    "tests-out/out/workflows/build.yml",
+    "tests-out/out/workflows/release.yml",
+]

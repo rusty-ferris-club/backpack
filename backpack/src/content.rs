@@ -5,7 +5,7 @@ use anyhow::Result;
 use dialoguer;
 use dialoguer::theme::ColorfulTheme;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tracing::warn;
 use walkdir;
 
@@ -13,7 +13,21 @@ use walkdir;
 pub struct Deployer {}
 
 #[tracing::instrument(skip_all, err)]
-fn copy_dir(source: &Path, dest: &Path, overwrite: Overwrite) -> Result<()> {
+fn copy(source: &Path, dest: &Path, is_file: bool, overwrite: Overwrite) -> Result<()> {
+    if is_file {
+        // dest is a full path incl. file
+        let dest_path = dest
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("cannot get parent for {:?}", dest))?;
+        if !dest_path.exists() {
+            println!("{:?}", dest_path);
+            fs::create_dir_all(&dest_path)?;
+        }
+
+        println!("copy {:?}, {:?}", source, dest);
+        fs::copy(source, &dest)?;
+        return Ok(());
+    }
     walkdir::WalkDir::new(source)
         .into_iter()
         .try_for_each(|entry| {
@@ -62,22 +76,37 @@ impl Deployer {
     ) -> Result<String> {
         // xxx: either way canonicalize paths.
         let final_source = source.join(location.subfolder.clone().unwrap_or_default());
-        let final_dest = dest
-            .or_else(|| location.subfolder.as_ref().map(Path::new))
-            .unwrap_or_else(|| Path::new("."));
+        let dest = dest.map(std::path::Path::to_path_buf);
+        let location_path = location.subfolder.clone().map(PathBuf::from);
+
+        // is this "deploying" a single file or a folder?
+        let is_file = final_source.is_file();
+        let final_dest = if is_file {
+            // final dest = dest | location+fname | fname
+            let fname = final_source
+                .file_name()
+                .ok_or_else(|| anyhow::anyhow!("cannot get file name for {:?}", final_source))?;
+            dest.or_else(|| {
+                location_path.and_then(|loc| loc.parent().map(|p| p.to_path_buf().join(fname)))
+            })
+            .unwrap_or_else(|| PathBuf::from(fname))
+        } else {
+            dest.or(location_path)
+                .unwrap_or_else(|| PathBuf::from(".".to_string()))
+        };
+
         match mode {
             CopyMode::Copy => {
                 if final_dest.exists() {
                     anyhow::bail!("path already exists: {}", final_dest.display());
                 }
-                std::fs::create_dir_all(final_dest)?;
-                copy_dir(&final_source, final_dest, Overwrite::Always)?;
+                copy(&final_source, &final_dest, is_file, Overwrite::Always)?;
             }
             CopyMode::Apply => {
-                std::fs::create_dir_all(final_dest)?;
-                copy_dir(
+                copy(
                     &final_source,
-                    final_dest,
+                    &final_dest,
+                    is_file,
                     if overwrite {
                         Overwrite::Always
                     } else {

@@ -450,9 +450,6 @@ mod tests {
     use super::*;
     use insta::assert_debug_snapshot;
     use serial_test::serial;
-    /*
-    what happens if i have local project, and remote project overwriting it?
-     */
 
     #[test]
     fn test_selection_filtering() {

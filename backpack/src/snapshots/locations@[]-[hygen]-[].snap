@@ -1,10 +1,25 @@
 ---
 source: backpack/src/shortlink.rs
-expression: "(link.clone(), expand(&link, &config))"
+expression: "(link.clone(), expand(&link, false, &config))"
 ---
 (
     "hygen",
-    Err(
-        "cannot find a project in: /hygen",
+    Ok(
+        (
+            github.com,
+            Location {
+                url: "https://github.com/hygen",
+                domain: "github.com",
+                path: "/hygen",
+                project: "hygen",
+                port: None,
+                query: None,
+                subfolder: None,
+                gref: None,
+                username: "",
+                password: None,
+                is_git: false,
+            },
+        ),
     ),
 )

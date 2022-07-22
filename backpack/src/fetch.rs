@@ -46,7 +46,6 @@ impl<'a> Fetcher<'a> {
     #[tracing::instrument(skip_all, err)]
     fn fetch_archive(&self, archive: &Archive, no_cache: bool) -> AnyResult<(String, bool)> {
         let cache = Cache::builder()
-            // xxx replace with user-folder cache like .cargo has
             .dir(self.cache_path.to_path_buf())
             .progress_bar(None)
             .freshness_lifetime(if no_cache { 0 } else { 60 * 60 * 24 })
