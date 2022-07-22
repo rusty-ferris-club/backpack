@@ -1,0 +1,12 @@
+---
+source: backpack/src/config.rs
+expression: empty_config
+---
+(
+    Config {
+        project_sources: None,
+        projects: None,
+        vendors: None,
+    },
+    Default,
+)
