@@ -103,8 +103,8 @@ $ bp new kriasoft/react-starter-kit my-react-project
 ```
 
 
-:white_check_mark: Use `new` to create **a new project**  into `my-react-project` 
-:white_check_mark: Resolves to [https://github.com/kriasoft/react-starter-kit](https://github.com/kriasoft/react-starter-kit)    
+:white_check_mark: Use `new` to create **a new project**  into `my-react-project`   
+:white_check_mark: Resolves to [https://github.com/kriasoft/react-starter-kit](https://github.com/kriasoft/react-starter-kit)     
 :white_check_mark: Finds the default branch, downloads it and caches locally. Next time you run, it'll be much faster.    
 
 You can start with your new project:
