@@ -1,5 +1,7 @@
 use crate::data::Location;
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
+use git2::{Cred, Direction, Remote, RemoteCallbacks};
+
 use std::process::Command;
 use tracing;
 
@@ -64,47 +66,34 @@ impl GitProvider for GitCmd {
         } else {
             location.web_url()
         };
+        let mut callbacks = RemoteCallbacks::new();
+        let home = dirs::home_dir().ok_or_else(|| anyhow!("no home dir found"))?;
+        let key = vec![".ssh/id_rsa", ".ssh/id_ed25519"]
+            .into_iter()
+            .map(|k| home.join(k))
+            .find(|p| p.exists())
+            .ok_or_else(|| anyhow!("no git authentication detail found"))?;
 
-        let process = Command::new("git")
-            .arg("ls-remote")
-            .arg(remote)
-            .output()
-            .context("cannot run git ls-remote")?;
-        if !process.status.success() {
-            log::error!("git ls-remote failed. stderr output:");
-            let err = String::from_utf8_lossy(&process.stderr);
-            err.split('\n').for_each(|line| log::error!("> {}", line));
-            anyhow::bail!(
-                "git ls-remote failed with exit code {}\n---\n{}",
-                process
-                    .status
-                    .code()
-                    .map_or_else(|| "None".into(), |code| code.to_string()),
-                err
-            );
-        }
-
-        String::from_utf8_lossy(&process.stdout)
-            .split('\n')
-            .filter(|line| !line.is_empty())
-            .map(|line| {
-                let (revision, ref_) = line
-                    .split_once('\t')
-                    .ok_or_else(|| anyhow::format_err!("Output line contains no '\\t'"))?;
-                anyhow::ensure!(
-                    !ref_.contains('\t'),
-                    "Output line contains more than one '\\t'"
-                );
-                Ok(RemoteInfo {
-                    revision: revision.into(),
-                    ref_: ref_.into(),
-                })
+        callbacks.credentials(move |_url, username_from_url, _allowed_types| {
+            Cred::ssh_key(username_from_url.unwrap(), None, key.as_path(), None)
+        });
+        let mut r = Remote::create_detached(remote.as_str())?;
+        let connection = r.connect_auth(Direction::Fetch, Some(callbacks), None)?;
+        let info = connection
+            .list()?
+            .iter()
+            .map(|c| RemoteInfo {
+                revision: c.oid().to_string(),
+                ref_: c.name().to_string(),
             })
-            .collect::<Result<Vec<RemoteInfo>>>()
+            .collect::<Vec<_>>();
+        Ok(info)
     }
 
     #[tracing::instrument(name = "git_clone", skip_all, err)]
     fn shallow_clone(&self, location: &Location, out: &str) -> anyhow::Result<()> {
+        // libgit2 has no shallow clone(!)
+
         // -b branch
         // need to take location, and ask it for the git url
         let giturl = location.git_url();
