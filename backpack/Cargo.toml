@@ -42,6 +42,7 @@ walkdir = "2"
 serde_merge = "^0.1.2"
 dirs = "4"
 tracing = "^0.1.34"
+git2 = "^0.14.0"
 reqwest = { version = "^0.11.11", features = ["blocking"] }
 tracing-forest = { version = "^0.1.4" }
 tracing-subscriber = { version = "^0.3.11", features = ["env-filter"] }
