@@ -13,9 +13,9 @@ if ($args.Length -eq 1) {
 
 $Install = $env:BP_INSTALL
 $BinDir = if ($Install) {
-  "$Install\bin"
+  "$Install"
 } else {
-  "$Home\.backpack-bin\bin"
+  "$Home\.backpack-bin"
 }
 
 $Zip = "$BinDir\backpack.zip"
@@ -37,7 +37,7 @@ if (!(Test-Path $BinDir)) {
 
 curl.exe -Lo $Zip $Uri
 
-tar.exe xf $Zip -C $BinDir
+tar.exe xf $Zip -C $BinDir --strip-components 1 
 
 Remove-Item $Zip
 
