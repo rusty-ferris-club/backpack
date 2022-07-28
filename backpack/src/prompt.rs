@@ -176,8 +176,24 @@ impl<'a> Prompt<'a> {
     pub fn say_unpacking(&self) {
         println!("🎒 Unpacking files...");
     }
-    pub fn say_done(&self, res: &str) {
-        println!("🎉 Done in: '{}'", res);
+    pub fn say_done(&self, res: &[String]) {
+        let total = res.len();
+        let cutoff = 10;
+        res.iter().enumerate().take(cutoff).for_each(|(i, s)| {
+            if i == 0 {
+                println!();
+            }
+            println!(" {} {}", style("+").green(), style(s).dim());
+        });
+        if total > cutoff {
+            println!(
+                "   {} {} {}",
+                style("... and").dim(),
+                style(total - cutoff).yellow(),
+                style("more file(s).").dim()
+            );
+        }
+        println!("\n🎉 Done: {} file(s) copied.", style(total).yellow());
     }
 }
 

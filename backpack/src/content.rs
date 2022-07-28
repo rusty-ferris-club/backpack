@@ -13,21 +13,21 @@ use walkdir;
 pub struct Deployer {}
 
 #[tracing::instrument(skip_all, err)]
-fn copy(source: &Path, dest: &Path, is_file: bool, overwrite: Overwrite) -> Result<()> {
+fn copy(source: &Path, dest: &Path, is_file: bool, overwrite: Overwrite) -> Result<Vec<String>> {
     if is_file {
         // dest is a full path incl. file
         let dest_path = dest
             .parent()
             .ok_or_else(|| anyhow::anyhow!("cannot get parent for {:?}", dest))?;
         if !dest_path.exists() {
-            println!("{:?}", dest_path);
             fs::create_dir_all(&dest_path)?;
         }
 
-        println!("copy {:?}, {:?}", source, dest);
         fs::copy(source, &dest)?;
-        return Ok(());
+        return Ok(vec![dest.display().to_string()]);
     }
+
+    let mut copied = vec![];
     walkdir::WalkDir::new(source)
         .into_iter()
         .try_for_each(|entry| {
@@ -51,16 +51,18 @@ fn copy(source: &Path, dest: &Path, is_file: bool, overwrite: Overwrite) -> Resu
                         _ => false,
                     };
                     if should_copy {
-                        fs::copy(path, to)?;
+                        fs::copy(path, &to)?;
+                        copied.push(to.display().to_string());
                     }
                 } else {
-                    fs::copy(path, to)?;
+                    fs::copy(path, &to)?;
+                    copied.push(to.display().to_string());
                 }
             }
 
             anyhow::Ok(())
         })?;
-    Ok(())
+    Ok(copied)
 }
 
 impl Deployer {
@@ -73,7 +75,7 @@ impl Deployer {
         mode: &CopyMode,
         overwrite: bool,
         remove_source: bool,
-    ) -> Result<String> {
+    ) -> Result<Vec<String>> {
         // xxx: either way canonicalize paths.
         let final_source = source.join(location.subfolder.clone().unwrap_or_default());
         let dest = dest.map(std::path::Path::to_path_buf);
@@ -95,33 +97,33 @@ impl Deployer {
                 .unwrap_or_else(|| PathBuf::from(".".to_string()))
         };
 
-        match mode {
+        let res = match mode {
             CopyMode::Copy => {
                 if final_dest.exists() {
                     anyhow::bail!("path already exists: {}", final_dest.display());
                 }
-                copy(&final_source, &final_dest, is_file, Overwrite::Always)?;
+                copy(&final_source, &final_dest, is_file, Overwrite::Always)?
             }
-            CopyMode::Apply => {
-                copy(
-                    &final_source,
-                    &final_dest,
-                    is_file,
-                    if overwrite {
-                        Overwrite::Always
-                    } else {
-                        Overwrite::Ask
-                    },
-                )?;
+            CopyMode::Apply => copy(
+                &final_source,
+                &final_dest,
+                is_file,
+                if overwrite {
+                    Overwrite::Always
+                } else {
+                    Overwrite::Ask
+                },
+            )?,
+            CopyMode::All => {
+                vec![]
             }
-            CopyMode::All => {}
-        }
+        };
         if remove_source {
             // xxx don't remove for now
             warn!("remove requested, but not removing '{}'", source.display());
         }
         // copy vs apply
-        Ok(final_dest.display().to_string())
+        Ok(res)
     }
 }
 
