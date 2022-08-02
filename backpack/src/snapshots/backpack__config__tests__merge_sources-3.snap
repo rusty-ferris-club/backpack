@@ -25,6 +25,7 @@ expression: config_fully_loaded
                     run: None,
                     source: External,
                     mode: None,
+                    actions: None,
                 },
                 "rust": Project {
                     shortlink: "rusty-ferris-club",
@@ -33,6 +34,7 @@ expression: config_fully_loaded
                     run: None,
                     source: External,
                     mode: None,
+                    actions: None,
                 },
             },
         ),

@@ -21,6 +21,7 @@ expression: config_fully_loaded
                     run: None,
                     source: Local,
                     mode: None,
+                    actions: None,
                 },
             },
         ),

@@ -1,4 +1,5 @@
 use crate::{
+    actions::Action,
     config::Config,
     data::{Assets, Location},
     git::GitProvider,
@@ -15,18 +16,25 @@ lazy_static! {
     static ref RE_VENDOR: Regex = Regex::new(r"^([a-zA-Z0-9_-]+):(.+)$").unwrap();
 }
 
-fn expand(
+#[allow(clippy::type_complexity)]
+fn expand<'a>(
     shortlink: &str,
     is_git: bool,
-    config: &Config,
-) -> AnyResult<(Box<dyn Vendor>, Location)> {
-    let (shortlink, is_git) = config
+    config: &'a Config,
+) -> AnyResult<(Box<dyn Vendor>, Location, Option<&'a Vec<Action>>)> {
+    let (shortlink, is_git, actions) = config
         .projects
         .as_ref()
         .and_then(|projects| projects.get(shortlink))
         .map_or_else(
-            || (shortlink, is_git),
-            |project| (project.shortlink.as_str(), project.is_git.unwrap_or(false)),
+            || (shortlink, is_git, None),
+            |project| {
+                (
+                    project.shortlink.as_str(),
+                    project.is_git.unwrap_or(false),
+                    project.actions.as_ref(),
+                )
+            },
         );
     let vendors = Vendors::new(config);
     let (vendor, url) = if shortlink.starts_with("https://") {
@@ -75,7 +83,7 @@ fn expand(
     };
 
     let location = Location::from(&url, is_git)?;
-    Ok((vendor, location))
+    Ok((vendor, location, actions))
 }
 
 pub struct Shortlink<'a> {
@@ -89,9 +97,14 @@ impl<'a> Shortlink<'a> {
     }
 
     #[tracing::instrument(name = "shortlink_resolve", skip_all, err)]
-    pub fn resolve(&self, shortlink: &str, is_git: bool) -> AnyResult<(Location, Assets)> {
-        let (vendor, location) = expand(shortlink, is_git, self.config)?;
-        vendor.resolve(&location, self.git)
+    pub fn resolve(
+        &self,
+        shortlink: &str,
+        is_git: bool,
+    ) -> AnyResult<(Location, Assets, Option<&'a Vec<Action>>)> {
+        let (vendor, location, actions) = expand(shortlink, is_git, self.config)?;
+        let (location, assets) = vendor.resolve(&location, self.git)?;
+        Ok((location, assets, actions))
     }
 }
 

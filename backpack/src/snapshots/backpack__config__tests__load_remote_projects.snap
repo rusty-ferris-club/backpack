@@ -20,6 +20,7 @@ Config {
                 run: None,
                 source: External,
                 mode: None,
+                actions: None,
             },
         },
     ),

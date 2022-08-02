@@ -12,6 +12,7 @@ expression: "config.projects_for_selection(&CopyMode::Copy)"
             run: None,
             source: Local,
             mode: None,
+            actions: None,
         },
     ),
     (
@@ -25,6 +26,7 @@ expression: "config.projects_for_selection(&CopyMode::Copy)"
             mode: Some(
                 Copy,
             ),
+            actions: None,
         },
     ),
 ]

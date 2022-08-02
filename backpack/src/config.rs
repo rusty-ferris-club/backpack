@@ -1,3 +1,4 @@
+use crate::actions::Action;
 use crate::data::CopyMode;
 use crate::merge;
 use anyhow::{anyhow, bail, Context, Result as AnyResult};
@@ -7,6 +8,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
+
 use tracing::warn;
 
 const GLOBAL_CONFIG_FOLDER: &str = ".backpack";
@@ -87,7 +89,7 @@ impl Config {
     }
     #[tracing::instrument(name = "config_from_text", skip_all, err)]
     pub fn to_text(&self) -> AnyResult<String> {
-        Ok(serde_yaml::to_string(self)?)
+        serde_yaml::to_string(self).context("cannot parse YAML")
     }
 
     #[tracing::instrument(name = "config_load", skip_all, err)]
@@ -229,7 +231,7 @@ impl Config {
 
     #[tracing::instrument(name = "config_merge", skip_all)]
     fn merge(base: Self, overrides: Self) -> AnyResult<Self> {
-        Ok(merge::merge(&base, &overrides)?)
+        merge::merge(&base, &overrides).context("cannot merge config")
     }
 
     /// Initialize a local configuration
@@ -425,6 +427,9 @@ pub struct Project {
 
     #[serde(rename = "mode")]
     pub mode: Option<CopyMode>,
+
+    #[serde(rename = "actions")]
+    pub actions: Option<Vec<Action>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

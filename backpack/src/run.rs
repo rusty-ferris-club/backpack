@@ -1,34 +1,29 @@
+use crate::actions::ActionRunner;
 use crate::config::Config;
-use crate::content::Deployer;
-use crate::data::CopyMode;
+use crate::content::{Coordinate, Deployer};
+use crate::data::Opts;
 use crate::fetch::Fetcher;
 use crate::git::{GitCmd, GitProvider};
-use crate::prompt::Prompt;
 use crate::shortlink::Shortlink;
+use crate::ui::Prompt;
 use anyhow::{Context, Result};
+use requestty_ui::events::KeyEvent;
 use std::path::Path;
 
-#[allow(clippy::struct_excessive_bools)]
-#[derive(Debug)]
-pub struct Opts {
-    pub overwrite: bool,
-    pub mode: CopyMode,
-    pub is_git: bool,
-    pub no_cache: bool,
-    pub no_dest_input: bool,
-    pub always_yes: bool,
-    pub remote: Option<String>,
-}
 pub struct Runner {
     git: Box<dyn GitProvider>,
-    pub show_progress: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct RunnerEvents {
+    pub prompt_events: Option<Vec<KeyEvent>>,
+    pub actions_events: Option<Vec<KeyEvent>>,
 }
 
 impl Default for Runner {
     fn default() -> Self {
         Self {
             git: Box::new(GitCmd::default()),
-            show_progress: false,
         }
     }
 }
@@ -39,27 +34,53 @@ impl Runner {
     ///
     /// This function will return an error if anything in the workflow failed
     pub fn run(&self, shortlink: Option<&str>, dest: Option<&str>, opts: &Opts) -> Result<()> {
-        self.run_workflow(shortlink, dest, opts)
+        self.run_workflow(shortlink, dest, opts, None)
     }
 
-    #[tracing::instrument(skip(self), err)]
-    fn run_workflow(&self, shortlink: Option<&str>, dest: Option<&str>, opts: &Opts) -> Result<()> {
+    /// Run the workflow with progress and synthetic test events
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if anything in the workflow failed
+    pub fn run_with_events(
+        &self,
+        shortlink: Option<&str>,
+        dest: Option<&str>,
+        opts: &Opts,
+        events: &RunnerEvents,
+    ) -> Result<()> {
+        self.run_workflow(shortlink, dest, opts, Some(events))
+    }
+
+    fn run_workflow(
+        &self,
+        shortlink: Option<&str>,
+        dest: Option<&str>,
+        opts: &Opts,
+        events: Option<&RunnerEvents>,
+    ) -> Result<()> {
         let (mut config, _) = Config::load_or_default().context("could not load configuration")?;
 
         // optionally add remote and sync here if remote exists
         if let Some(remote) = opts.remote.as_ref() {
             let num = config.fetch_and_load_remote_projects(remote.as_str())?;
-            let prompt = Prompt::new(&config);
+            let mut prompt = Prompt::new(&config, opts.show_progress);
             if prompt.confirm_save_remotes(num)? {
                 config.save()?;
             }
         }
 
         let config = config;
-        let prompt = Prompt::new(&config);
+        let prompt = &mut events
+            .and_then(|evs| evs.prompt_events.as_ref())
+            .map_or_else(
+                || Prompt::new(&config, opts.show_progress),
+                |evs| Prompt::with_events(&config, evs.clone()),
+            );
+
         let should_confirm = shortlink.is_none() || dest.is_none();
 
-        let (is_git, shortlink, dest) = prompt.fill_missing(shortlink, dest, opts)?;
+        let (shortlink, dest) = prompt.fill_missing(shortlink, dest, opts)?;
 
         // confirm
         if !opts.always_yes
@@ -69,35 +90,38 @@ impl Runner {
             return Ok(());
         }
 
-        if self.show_progress {
-            prompt.say_resolving();
-        }
-
+        prompt.say_resolving();
         let sl = Shortlink::new(&config, self.git.as_ref());
-        let (location, assets) = sl.resolve(&shortlink, is_git)?;
+        let (location, assets, actions) = sl.resolve(&shortlink, opts.is_git)?;
 
         let cached_path = Config::global_cache_folder()?;
         let fetcher = Fetcher::new(self.git.as_ref(), cached_path.as_path());
-        if self.show_progress {
-            prompt.say_fetching();
-        }
+
+        prompt.say_fetching();
         let (source, remove_source) = fetcher.fetch(&location, &assets, opts.no_cache)?;
 
-        if self.show_progress {
-            prompt.say_unpacking();
-        }
+        prompt.say_unpacking();
+        // rig runner with or without synthetic keyboard events
+        let action_runner = actions.map(|acts| {
+            events
+                .and_then(|evs| evs.actions_events.clone())
+                .map_or_else(
+                    || ActionRunner::new(acts),
+                    |evs| ActionRunner::with_events(acts, evs),
+                )
+        });
+
         let deployer = Deployer::default();
-        let res = deployer.deploy(
-            Path::new(&source),
-            dest.as_ref().map(Path::new),
-            &location,
-            &opts.mode,
-            opts.overwrite,
+
+        let coords = Coordinate {
+            source: source.as_path(),
+            dest: dest.as_ref().map(Path::new),
+            location: &location,
             remove_source,
-        )?;
-        if self.show_progress {
-            prompt.say_done(&res);
-        }
+        };
+        let (files, maybe_actions) = deployer.deploy(coords, action_runner, opts, prompt)?;
+
+        prompt.say_done(&files, maybe_actions.as_ref());
         Ok(())
     }
 }

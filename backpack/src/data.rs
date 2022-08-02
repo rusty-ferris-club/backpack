@@ -99,3 +99,15 @@ pub enum CopyMode {
     #[serde(rename = "all")]
     All,
 }
+
+#[allow(clippy::struct_excessive_bools)]
+#[derive(Debug)]
+pub struct Opts {
+    pub show_progress: bool,
+    pub overwrite: bool,
+    pub mode: CopyMode,
+    pub is_git: bool,
+    pub no_cache: bool,
+    pub always_yes: bool,
+    pub remote: Option<String>,
+}

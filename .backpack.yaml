@@ -23,6 +23,24 @@ version: 1
 #     shortlink: foobar  # you can use any custom prefix here too
 #
 #
+projects:
+  react-prompts:
+    shortlink: kriasoft/react-starter-kit
+    actions:
+    - name: "Install deps"
+      interaction:
+        kind: confirm
+        prompt: "are you sure?"
+      run: yarn install
+      # break_if_cancel: true
+      ignore_exit: true
+    - name: "generate a model"
+      interaction:
+        kind: input
+        prompt: name of your app
+        out: name
+      run: echo hello {{name}}
+
 
 #
 # set up custom vendor prefixes, for convenience and also for custom git

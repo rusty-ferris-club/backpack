@@ -1,7 +1,7 @@
 use anyhow::Result as AnyResult;
 use backpack::{
-    data::CopyMode,
-    run::{Opts, Runner},
+    data::{CopyMode, Opts},
+    run::Runner,
 };
 use clap::{Arg, ArgMatches, Command};
 
@@ -52,16 +52,15 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
         .get_one::<String>("remote")
         .map(String::to_string);
 
-    let mut r = Runner::default();
-    r.show_progress = true;
+    let r = Runner::default();
     r.run(
         shortlink.map(String::as_str),
         dest.map(String::as_str),
         &Opts {
+            show_progress: true,
             overwrite: false,
             is_git: subcommand_matches.is_present("git"),
             no_cache: subcommand_matches.is_present("no-cache"),
-            no_dest_input: false,
             always_yes: false,
             remote,
             mode: CopyMode::Copy,
