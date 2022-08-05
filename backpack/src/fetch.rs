@@ -1,6 +1,6 @@
 use anyhow::Result as AnyResult;
 use cached_path::{Cache, Options};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::{
     data::{Archive, ArchiveRoot, Assets, Location},
@@ -23,7 +23,7 @@ impl<'a> Fetcher<'a> {
         location: &Location,
         assets: &Assets,
         no_cache: bool,
-    ) -> AnyResult<(String, bool)> {
+    ) -> AnyResult<(PathBuf, bool)> {
         if location.is_git {
             self.fetch_git(location)
         } else {
@@ -36,15 +36,15 @@ impl<'a> Fetcher<'a> {
     }
 
     #[tracing::instrument(skip_all, err)]
-    fn fetch_git(&self, location: &Location) -> AnyResult<(String, bool)> {
+    fn fetch_git(&self, location: &Location) -> AnyResult<(PathBuf, bool)> {
         let out = tempfile::tempdir()?.path().to_str().unwrap().to_string();
 
         self.git.shallow_clone(location, &out)?;
-        Ok((out, true))
+        Ok((PathBuf::from(out), true))
     }
 
     #[tracing::instrument(skip_all, err)]
-    fn fetch_archive(&self, archive: &Archive, no_cache: bool) -> AnyResult<(String, bool)> {
+    fn fetch_archive(&self, archive: &Archive, no_cache: bool) -> AnyResult<(PathBuf, bool)> {
         let cache = Cache::builder()
             .dir(self.cache_path.to_path_buf())
             .progress_bar(None)
@@ -69,6 +69,6 @@ impl<'a> Fetcher<'a> {
             ArchiveRoot::None => extracted.display().to_string(),
         };
 
-        Ok((dir, false))
+        Ok((PathBuf::from(dir), false))
     }
 }

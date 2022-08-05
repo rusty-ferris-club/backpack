@@ -20,6 +20,7 @@ expression: "(link.clone(), expand(&link, false, &config))"
                 password: None,
                 is_git: false,
             },
+            None,
         ),
     ),
 )

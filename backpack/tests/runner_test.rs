@@ -1,9 +1,10 @@
 use std::{env, fs};
 
 use backpack::config::Config;
-use backpack::data::CopyMode;
-use backpack::run::{Opts, Runner};
+use backpack::data::{CopyMode, Opts};
+use backpack::run::{Runner, RunnerEvents};
 use insta::assert_debug_snapshot;
+use requestty_ui::events::KeyCode;
 use serial_test::serial;
 use walkdir::{DirEntry, WalkDir};
 
@@ -30,36 +31,78 @@ fn list_folder(dest: &str) -> Vec<String> {
     r
 }
 
-fn run(shortlink: Option<&str>, dest: Option<&str>, mode: CopyMode) -> Vec<String> {
+fn run(
+    shortlink: Option<&str>,
+    dest: Option<&str>,
+    mode: CopyMode,
+    local_config: Option<&str>,
+    events: Option<RunnerEvents>,
+) -> Vec<String> {
     let tests_out = "tests-out";
     fs::remove_dir_all(tests_out).ok();
     fs::create_dir(tests_out).unwrap();
     let current_dir = env::current_dir().unwrap();
     env::set_current_dir(tests_out).unwrap();
+    if let Some(config) = local_config {
+        let _res = fs::remove_file(".backpack.yaml");
+        fs::write(".backpack.yaml", config).unwrap();
+    }
 
-    Runner::default()
-        .run(
+    let _res = if let Some(events) = events {
+        Runner::default().run_with_events(
             shortlink,
             dest,
             &Opts {
+                show_progress: false,
                 overwrite: false,
                 is_git: false,
                 no_cache: false,
-                no_dest_input: true,
+                always_yes: true,
+                remote: None,
+                mode,
+            },
+            &events,
+        )
+    } else {
+        Runner::default().run(
+            shortlink,
+            dest,
+            &Opts {
+                show_progress: false,
+                overwrite: false,
+                is_git: false,
+                no_cache: false,
                 always_yes: true,
                 remote: None,
                 mode,
             },
         )
-        .unwrap();
+    };
 
     env::set_current_dir(current_dir).unwrap();
     list_folder(tests_out)
 }
 
-fn run_with_no_config(shortlink: Option<&str>, dest: Option<&str>, mode: CopyMode) -> Vec<String> {
+fn run_with_no_config(
+    shortlink: Option<&str>,
+    dest: Option<&str>,
+    mode: CopyMode,
+    events: Option<RunnerEvents>,
+) -> Vec<String> {
     ensure_no_config();
-    run(shortlink, dest, mode)
+    run(shortlink, dest, mode, None, events)
+}
+
+fn run_with_local_config(
+    shortlink: Option<&str>,
+    dest: Option<&str>,
+    mode: CopyMode,
+    config: &str,
+    events: Option<RunnerEvents>,
+) -> Vec<String> {
+    ensure_no_config();
+    env::remove_var("BP_CONF");
+    run(shortlink, dest, mode, Some(config), events)
 }
 
 #[test]
@@ -69,6 +112,7 @@ fn test_run_source_dest() {
         Some("rusty-ferris-club/backpack-e2e-frozen"),
         Some("out"),
         CopyMode::Copy,
+        None,
     ));
 }
 
@@ -79,6 +123,7 @@ fn test_run_source_dest_subfolder() {
         Some("rusty-ferris-club/backpack-e2e-frozen/-/.github"),
         Some("out"),
         CopyMode::Copy,
+        None,
     ));
 }
 
@@ -89,6 +134,7 @@ fn test_run_source_dest_single_file() {
         Some("rusty-ferris-club/backpack-e2e-frozen/-/.github/workflows/build.yml"),
         Some("out/build.yml"),
         CopyMode::Copy,
+        None,
     ));
 }
 
@@ -99,6 +145,12 @@ fn test_run_source_single_file() {
         Some("rusty-ferris-club/backpack-e2e-frozen/-/.github/workflows/build.yml"),
         None,
         CopyMode::Apply,
+        Some(RunnerEvents {
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(),     // no dest
+            ]),
+            actions_events: None,
+        }),
     ));
 }
 
@@ -109,5 +161,165 @@ fn test_run_source_gist() {
         Some("https://gist.github.com/jondot/15086f59dab44f30bb10f82ca09f4887"),
         None,
         CopyMode::Apply,
+        Some(RunnerEvents {
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(),     // no dest
+            ]),
+            actions_events: None,
+        }),
+    ));
+}
+
+#[test]
+#[serial]
+fn test_run_with_actions() {
+    assert_debug_snapshot!(run_with_local_config(
+        Some("integration"),
+        None,
+        CopyMode::Apply,
+        r#"
+projects:
+  integration:
+    shortlink: rusty-ferris-club/backpack-e2e-frozen
+    actions:
+    - name: "test confirm"
+      interaction:
+        kind: confirm
+        prompt: "are you sure?"
+    - name: "grab input and create file"
+      interaction:
+        kind: input
+        prompt: name of your thing
+        out: name
+      run: touch {{name}}.txt
+"#,
+        Some(RunnerEvents {
+            actions_events: Some(vec![
+                KeyCode::Char('y').into(), // yes
+                KeyCode::Enter.into(),     //
+                KeyCode::Char('t').into(), // city: 'tlv'
+                KeyCode::Char('l').into(), //
+                KeyCode::Char('v').into(), //
+                KeyCode::Enter.into(),     //
+            ]),
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(),     // no dest
+            ]),
+        }),
+    ));
+}
+
+#[test]
+#[serial]
+fn test_run_with_actions_say_no() {
+    assert_debug_snapshot!(run_with_local_config(
+        Some("integration"),
+        None,
+        CopyMode::Apply,
+        r#"
+projects:
+  integration:
+    shortlink: rusty-ferris-club/backpack-e2e-frozen
+    actions:
+    - name: "test confirm"
+      interaction:
+        kind: confirm
+        prompt: "are you sure?"
+      break_if_cancel: true
+    - name: "grab input and create file"
+      interaction:
+        kind: input
+        prompt: name of your thing
+        out: name
+      run: touch {{name}}.txt
+"#,
+        Some(RunnerEvents {
+            actions_events: Some(vec![
+                KeyCode::Char('n').into(), // yes
+                KeyCode::Enter.into(),     //
+            ]),
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(),     // no dest
+            ]),
+        }),
+    ));
+}
+
+#[test]
+#[serial]
+fn test_run_with_actions_say_yes() {
+    assert_debug_snapshot!(run_with_local_config(
+        Some("integration"),
+        None,
+        CopyMode::Apply,
+        r#"
+projects:
+  integration:
+    shortlink: rusty-ferris-club/backpack-e2e-frozen
+    actions:
+    - name: "test confirm"
+      interaction:
+        kind: confirm
+        prompt: "are you sure?"
+      break_if_cancel: true
+    - name: "grab input and create file"
+      interaction:
+        kind: input
+        prompt: name of your thing
+        out: name
+      run: touch {{name}}.txt
+"#,
+        Some(RunnerEvents {
+            actions_events: Some(vec![
+                KeyCode::Char('y').into(), // yes
+                KeyCode::Enter.into(),     //
+                KeyCode::Char('t').into(), // 'tlv'
+                KeyCode::Char('l').into(), //
+                KeyCode::Char('v').into(), //
+                KeyCode::Enter.into(),     //
+            ]),
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(),     // no dest
+            ]),
+        }),
+    ));
+}
+
+#[test]
+#[serial]
+fn test_run_with_actions_say_no_without_break() {
+    assert_debug_snapshot!(run_with_local_config(
+        Some("integration"),
+        None,
+        CopyMode::Apply,
+        r#"
+projects:
+  integration:
+    shortlink: rusty-ferris-club/backpack-e2e-frozen
+    actions:
+    - name: "test confirm"
+      interaction:
+        kind: confirm
+        prompt: "are you sure?"
+    - name: "grab input and create file"
+      interaction:
+        kind: input
+        prompt: name of your thing
+        out: name
+      run: touch {{name}}.txt
+"#,
+        Some(RunnerEvents {
+            actions_events: Some(vec![
+                KeyCode::Char('n').into(), // yes
+                KeyCode::Enter.into(),     //
+                KeyCode::Char('t').into(), // 'tlv'
+                KeyCode::Char('l').into(), //
+                KeyCode::Char('v').into(), //
+                KeyCode::Enter.into(),     //
+            ]),
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(),     // no dest
+            ]),
+        }),
     ));
 }

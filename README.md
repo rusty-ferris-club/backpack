@@ -18,12 +18,13 @@ $ bp new user/repo
 ```
 
 :white_check_mark: A supercharged scaffolding machine   
-:white_check_mark: Grab subfolders, branches, tags from template projects    
-:white_check_mark: Personalize shortlinks and projects for individuals and teams  
-:white_check_mark: Fast clone    
-:white_check_mark: Apply files into current project  
+:white_check_mark: Grab **subfolders, branches, files**, or tags from template projects    
+:white_check_mark: Run **custom actions**   
+:white_check_mark: Personalize shortlinks and projects for **individuals and teams**  
+:white_check_mark: **Fast clone**  
+:white_check_mark: **Overlay files** into current project  
 :white_check_mark: No history or `.git` folder   
-:white_check_mark: Local cache support   
+:white_check_mark: Local **cache support**  
 
 
 
@@ -115,7 +116,7 @@ $ git init .
 $ yarn
 ```
 
-## :arrow_right_hook:	 Applying templates to existing projects
+## :arrow_right_hook:	 Applying/overlaying files onto existing projects
 
 Let's say you really like how `react-starter-kit` configured its Github Action, and you'd like to copy that to your **existing project**. You can do this:
 
@@ -143,13 +144,18 @@ For **private repos**, you might want to download over Git SSH protocol, add `--
 ```
 $ bp new kriasoft/react-starter-kit --git
 ```
-# :joystick:	Configuration
+# :joystick:	Using Projects
+
+A project is:
+
+* A shortcut for a repo, subfolder, or files
+* A set of actions (inspired by Github Actions) to run automatically after fetching content
+
 
 `backpack` is built for teams. This means you can configure your own shortcuts (called `projects`) to Git hosting vendors, organizations, and repos.
 
 ## :raising_hand_woman:	 Configuring user projects
 
-If you have a template project you always use, you can give it a shortcut name, or a "project".
 
 Start by generating a **global user** configuration file:
 
@@ -159,7 +165,7 @@ $ bp config --init --global
 And edit the file:
 
 ```
-$ code ~/.backpack/backpack.yaml
+$ vim ~/.backpack/backpack.yaml
 ```
 
 To add projects you can use the `projects` section:
@@ -189,7 +195,53 @@ $ bp new rust-starter
 
 Which will resolve to the correct location. Note: projects will automatically resolve custom Git vendors (see below for what these are).
 
-## :link: Using remote project sources
+### :rotating_light:	 Using Actions
+
+Here's a full project configuration example with actions:
+
+```yaml
+projects:
+  rust:
+    shortlink: rusty-ferris-club/rust-starter
+    actions:
+    - name: 🚨 ====== init git ===========
+      run: git init . && git add . && git commit -am "first commit"
+    - name: 🚨 ====== first build ========
+      run: cargo build
+```
+ 
+You can also add inputs, selections and confirmation, **including variable capture**:
+
+
+```yaml
+actions:
+  - name: "Install deps"
+    interaction:
+      kind: confirm
+      prompt: "are you sure?"
+    run: yarn install
+    ignore_exit: true
+  - name: select a DB
+    interaction:
+      kind: select
+      prompt: select a database
+      options:
+      - sqlite
+      - postgres
+      - mysql
+      default: sqlite
+      out: db
+  - name: "generate a model"
+    interaction:
+      kind: input
+      prompt: name of your app?
+      out: name
+    run: yarn run init-app {{db}} {{name}}
+
+```
+
+
+## :link: Sharing your projects
 You can create a configuration of favorite projects and put it online, to share with your team or save for yourself. Then:
 
 ```
@@ -207,7 +259,7 @@ projects:
 Running with this remote will show you through the available projects and also offer to save the source in your configuration.
 
 Here's a [an example](https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/main.yaml) from our own [backpack-tap](https://github.com/rusty-ferris-club/backpack-tap) repo.
-## :label:	 Configuring custom Git vendors
+## :label:	 Custom git vendors
 
 Start by generating a **project-local** configuration file:
 
@@ -353,4 +405,4 @@ To all [Contributors](https://github.com/rusty-ferris-club/backpack/graphs/contr
 
 # Copyright
 
-Copyright (c) 2021 [@jondot](http://twitter.com/jondot). See [LICENSE](LICENSE.txt) for further details.
+Copyright (c) 2022 [@jondot](http://twitter.com/jondot). See [LICENSE](LICENSE.txt) for further details.

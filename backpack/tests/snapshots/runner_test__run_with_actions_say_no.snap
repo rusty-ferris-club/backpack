@@ -1,0 +1,37 @@
+---
+source: backpack/tests/runner_test.rs
+expression: "run_with_local_config(Some(\"integration\"), None, CopyMode::Apply,\n    r#\"\nprojects:\n  integration:\n    shortlink: rusty-ferris-club/backpack-e2e-frozen\n    actions:\n    - name: \"test confirm\"\n      interaction:\n        kind: confirm\n        prompt: \"are you sure?\"\n      break_if_cancel: true\n    - name: \"grab input and create file\"\n      interaction:\n        kind: input\n        prompt: name of your thing\n        out: name\n      run: touch {{name}}.txt\n\"#,\n    Some(RunnerEvents {\n            actions_events: Some(vec![KeyCode :: Char('n').into(), KeyCode ::\n                    Enter.into(),]),\n            prompt_events: None,\n        }))"
+---
+[
+    "tests-out/.backpack.yaml",
+    "tests-out/.cargo/config.toml",
+    "tests-out/.github/ISSUE_TEMPLATE/bug_report.yml",
+    "tests-out/.github/ISSUE_TEMPLATE/feature_request.yml",
+    "tests-out/.github/workflows/build.yml",
+    "tests-out/.github/workflows/release.yml",
+    "tests-out/.gitignore",
+    "tests-out/Cargo.lock",
+    "tests-out/Cargo.toml",
+    "tests-out/LICENSE.txt",
+    "tests-out/README.md",
+    "tests-out/bumblefoot/Cargo.toml",
+    "tests-out/bumblefoot/build.rs",
+    "tests-out/bumblefoot/src/bin/bumblefoot.rs",
+    "tests-out/bumblefoot/src/bin/cmd/default.rs",
+    "tests-out/bumblefoot/src/bin/cmd/mod.rs",
+    "tests-out/bumblefoot/src/bin/cmd/validate.rs",
+    "tests-out/bumblefoot/src/data.rs",
+    "tests-out/bumblefoot/src/lib.rs",
+    "tests-out/bumblefoot/src/runner.rs",
+    "tests-out/media/cover.png",
+    "tests-out/media/screen.png",
+    "tests-out/xtask/Cargo.toml",
+    "tests-out/xtask/src/dual/Cargo.toml",
+    "tests-out/xtask/src/dual/src/bin/bumblefoot.rs",
+    "tests-out/xtask/src/dual/src/bin/cmd/default.rs",
+    "tests-out/xtask/src/dual/src/bin/cmd/mod.rs",
+    "tests-out/xtask/src/dual/src/bin/cmd/validate.rs",
+    "tests-out/xtask/src/main.rs",
+    "tests-out/xtask/src/simple/Cargo.toml",
+    "tests-out/xtask/src/simple/src/main.rs",
+]

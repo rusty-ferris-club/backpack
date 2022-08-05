@@ -4,14 +4,16 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::use_self)]
 #![allow(clippy::unused_self)]
+#![allow(clippy::missing_const_for_fn)]
 
+pub mod actions;
 pub mod config;
 pub mod content;
 pub mod data;
 pub mod fetch;
 pub mod git;
 mod merge;
-pub mod prompt;
 pub mod run;
 pub mod shortlink;
+pub mod ui;
 pub mod vendors;
