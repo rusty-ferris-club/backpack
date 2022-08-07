@@ -1,7 +1,7 @@
-use crate::actions::{Action, ActionResult, ActionRunner};
 use crate::data::{CopyMode, Location, Opts, Overwrite};
 use crate::ui::Prompt;
 use anyhow::Result;
+use interactive_actions::{data::Action, data::ActionResult, ActionRunner};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::warn;
@@ -95,7 +95,7 @@ impl Deployer {
 
             Some(action_runner.run(
                 Some(actions_dest),
-                Some(&|action: &Action| prompt.say_action(action.name.as_str())),
+                Some(|action: &Action| prompt.say_action(action.name.as_str())),
             )?)
         } else {
             None

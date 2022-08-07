@@ -1,8 +1,8 @@
-use crate::actions::ActionResult;
 use crate::config::Config;
 use crate::data::{CopyMode, Opts};
 use anyhow::{anyhow, Context, Result as AnyResult};
 use console::style;
+use interactive_actions::data::ActionResult;
 use requestty::{Answer, Answers, OnEsc, Question};
 use requestty_ui::backend::{Size, TestBackend};
 use requestty_ui::events::{KeyEvent, TestEvents};

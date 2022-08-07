@@ -1,11 +1,11 @@
 use crate::{
-    actions::Action,
     config::Config,
     data::{Assets, Location},
     git::GitProvider,
     vendors::{Vendor, Vendors},
 };
 use anyhow::Result as AnyResult;
+use interactive_actions::data::Action;
 use lazy_static::lazy_static;
 use regex::Regex;
 use tracing;

@@ -1,4 +1,3 @@
-use crate::actions::ActionRunner;
 use crate::config::Config;
 use crate::content::{Coordinate, Deployer};
 use crate::data::Opts;
@@ -7,6 +6,7 @@ use crate::git::{GitCmd, GitProvider};
 use crate::shortlink::Shortlink;
 use crate::ui::Prompt;
 use anyhow::{Context, Result};
+use interactive_actions::ActionRunner;
 use requestty_ui::events::KeyEvent;
 use std::path::Path;
 

@@ -1,8 +1,8 @@
-use crate::actions::Action;
 use crate::data::CopyMode;
 use crate::merge;
 use anyhow::{anyhow, bail, Context, Result as AnyResult};
 use dirs;
+use interactive_actions::data::Action;
 use reqwest::blocking::get;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};

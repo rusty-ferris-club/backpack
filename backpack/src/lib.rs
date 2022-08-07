@@ -6,7 +6,6 @@
 #![allow(clippy::unused_self)]
 #![allow(clippy::missing_const_for_fn)]
 
-pub mod actions;
 pub mod config;
 pub mod content;
 pub mod data;
