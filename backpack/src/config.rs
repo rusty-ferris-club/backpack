@@ -1,8 +1,8 @@
 use crate::data::CopyMode;
-use crate::merge;
 use anyhow::{anyhow, bail, Context, Result as AnyResult};
 use dirs;
 use interactive_actions::data::Action;
+use merge_struct;
 use reqwest::blocking::get;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
@@ -115,7 +115,6 @@ impl Config {
 
     #[tracing::instrument(name = "config_load", skip_all, err)]
     pub fn load_or_default() -> AnyResult<(Self, LoadSource)> {
-        // turn to vec operations
         let (local, global) = (Self::local_config_file(), Self::global_config_file()?);
         let configs = (
             if local.exists() {
@@ -142,7 +141,7 @@ impl Config {
             (Some(local_config), Some(global_config)) => {
                 let g = Self::load(&fs::read_to_string(global_config)?)?;
                 let c = Self::load(&fs::read_to_string(local_config)?)?;
-                (Self::merge(g, c)?, LoadSource::Merged)
+                (merge_struct::merge(&g, &c)?, LoadSource::Merged)
             }
             (None, None) => (Self::default(), LoadSource::Default),
         };
@@ -227,11 +226,6 @@ impl Config {
         }
 
         Ok(out)
-    }
-
-    #[tracing::instrument(name = "config_merge", skip_all)]
-    fn merge(base: Self, overrides: Self) -> AnyResult<Self> {
-        merge::merge(&base, &overrides).context("cannot merge config")
     }
 
     /// Initialize a local configuration
@@ -377,6 +371,12 @@ impl Config {
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default()
+    }
+
+    pub fn project(&self, shortlink: &str) -> Option<&Project> {
+        self.projects
+            .as_ref()
+            .and_then(|projects| projects.get(shortlink))
     }
 }
 

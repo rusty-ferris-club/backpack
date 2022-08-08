@@ -5,11 +5,11 @@ expression: assets
 Assets {
     archive: Some(
         Archive {
-            url: "https://gitlab.com/gitlab-org/gitlab/-/archive/refs/heads/master/gitlab-refs-heads-master.tar.gz",
+            url: "https://gitlab.com/jondot/backpack-e2e/-/archive/refs/heads/master/backpack-e2e-refs-heads-master.tar.gz",
             root: FirstFolder,
         },
     ),
     git: Some(
-        "git@gitlab.com:gitlab-org/gitlab.git",
+        "git@gitlab.com:jondot/backpack-e2e.git",
     ),
 }

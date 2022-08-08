@@ -74,6 +74,7 @@ dependencies = [
  "interactive-actions",
  "lazy_static",
  "log",
+ "merge-struct",
  "pretty_assertions",
  "regex",
  "requestty",
@@ -1060,6 +1061,16 @@ name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
+
+[[package]]
+name = "merge-struct"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d82012d21e24135b839b6b9bebd622b7ff0cb40071498bc2d066d3a6d04dd4a"
+dependencies = [
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "mime"

@@ -58,7 +58,7 @@ fn test_gitlab() {
     };
     let gh = Gitlab::new(None);
     let location = Location::from(
-        &Url::parse("https://gitlab.com/gitlab-org/gitlab").unwrap(),
+        &Url::parse("https://gitlab.com/jondot/backpack-e2e").unwrap(),
         false,
     )
     .unwrap();

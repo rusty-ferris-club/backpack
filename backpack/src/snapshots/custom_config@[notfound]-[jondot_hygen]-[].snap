@@ -1,6 +1,6 @@
 ---
 source: backpack/src/shortlink.rs
-expression: "(link.clone(), expand(&link, false, &config))"
+expression: "(link.clone(), expand(&link, false, &vendors))"
 ---
 (
     "notfound:jondot/hygen",

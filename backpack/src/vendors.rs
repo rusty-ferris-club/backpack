@@ -1,5 +1,5 @@
 use crate::{
-    config::{Config, CustomVendor},
+    config::{CustomVendor, VendorsConfig},
     data::{Archive, ArchiveRoot, Assets, Location},
     git::GitProvider,
 };
@@ -7,11 +7,11 @@ use anyhow::Result as AnyResult;
 use core::fmt::Debug;
 use tracing;
 pub struct Vendors<'a> {
-    config: &'a Config,
+    config: Option<&'a VendorsConfig>,
 }
 
 impl<'a> Vendors<'a> {
-    pub const fn new(config: &'a Config) -> Self {
+    pub const fn new(config: Option<&'a VendorsConfig>) -> Self {
         Self { config }
     }
 
@@ -23,14 +23,10 @@ impl<'a> Vendors<'a> {
         };
         let v = if vendor.is_empty() {
             self.config
-                .vendors
-                .as_ref()
                 .and_then(|v| v.vendors_default.as_ref())
                 .or(Some(&github))
         } else {
             self.config
-                .vendors
-                .as_ref()
                 .and_then(|vendors| vendors.custom.as_ref())
                 .and_then(|h| h.get(vendor))
         };
