@@ -246,7 +246,7 @@ impl<'a> Prompt<'a> {
             if let Some(ars) = maybe_actions {
                 println!();
                 for ar in ars.iter() {
-                    println!(" {} {}", style("🍿").green(), style(&ar.name).dim());
+                    println!(" {} {}", style("✅").green(), style(&ar.name).dim());
                 }
                 println!();
             };

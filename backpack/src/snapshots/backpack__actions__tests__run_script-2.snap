@@ -1,7 +1,0 @@
----
-source: backpack/src/actions.rs
-expression: actions.varbag
----
-{
-    "city": "tlv",
-}

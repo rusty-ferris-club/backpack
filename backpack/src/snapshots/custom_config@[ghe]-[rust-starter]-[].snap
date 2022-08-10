@@ -1,6 +1,6 @@
 ---
 source: backpack/src/shortlink.rs
-expression: "(link.clone(), expand(&link, false, &config))"
+expression: "(link.clone(), expand(&link, false, &vendors))"
 ---
 (
     "ghe:rust-starter",
@@ -20,7 +20,6 @@ expression: "(link.clone(), expand(&link, false, &config))"
                 password: None,
                 is_git: false,
             },
-            None,
         ),
     ),
 )

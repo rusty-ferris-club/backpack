@@ -1,6 +1,6 @@
 ---
 source: backpack/src/shortlink.rs
-expression: "(link.clone(), expand(&link, false, &config))"
+expression: "(link.clone(), expand(&link, false, &vendors))"
 ---
 (
     "rust-starter",
@@ -8,9 +8,9 @@ expression: "(link.clone(), expand(&link, false, &config))"
         (
             my.gitlab.com,
             Location {
-                url: "https://my.gitlab.com/jondot/rust-starter",
+                url: "https://my.gitlab.com/rust-starter",
                 domain: "my.gitlab.com",
-                path: "/jondot/rust-starter",
+                path: "/rust-starter",
                 project: "rust-starter",
                 port: None,
                 query: None,
@@ -18,9 +18,8 @@ expression: "(link.clone(), expand(&link, false, &config))"
                 gref: None,
                 username: "",
                 password: None,
-                is_git: true,
+                is_git: false,
             },
-            None,
         ),
     ),
 )

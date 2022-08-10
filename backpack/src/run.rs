@@ -92,7 +92,7 @@ impl Runner {
 
         prompt.say_resolving();
         let sl = Shortlink::new(&config, self.git.as_ref());
-        let (location, assets, actions) = sl.resolve(&shortlink, opts.is_git)?;
+        let (location, assets) = sl.resolve(&shortlink, opts.is_git)?;
 
         let cached_path = Config::global_cache_folder()?;
         let fetcher = Fetcher::new(self.git.as_ref(), cached_path.as_path());
@@ -102,6 +102,7 @@ impl Runner {
 
         prompt.say_unpacking();
         // rig runner with or without synthetic keyboard events
+        let actions = sl.actions(&shortlink);
         let action_runner = actions.map(|acts| {
             events
                 .and_then(|evs| evs.actions_events.clone())

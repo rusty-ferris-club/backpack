@@ -11,7 +11,6 @@ pub mod content;
 pub mod data;
 pub mod fetch;
 pub mod git;
-mod merge;
 pub mod run;
 pub mod shortlink;
 pub mod ui;
