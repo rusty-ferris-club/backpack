@@ -22,6 +22,7 @@ expression: filled_config
                     source: External,
                     mode: None,
                     actions: None,
+                    swaps: None,
                 },
             },
         ),

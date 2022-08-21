@@ -1,5 +1,5 @@
 use crate::{
-    config::Config,
+    config::{Config, Swap},
     data::{Assets, Location},
     git::GitProvider,
     vendors::{Vendor, Vendors},
@@ -99,6 +99,11 @@ impl<'a> Shortlink<'a> {
         self.config
             .project(shortlink)
             .and_then(|project| project.actions.as_ref())
+    }
+    pub fn swaps(&self, shortlink: &str) -> Option<&'a Vec<Swap>> {
+        self.config
+            .project(shortlink)
+            .and_then(|project| project.swaps.as_ref())
     }
 }
 

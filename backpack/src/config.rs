@@ -3,11 +3,12 @@ use anyhow::{anyhow, bail, Context, Result as AnyResult};
 use dirs;
 use interactive_actions::data::Action;
 use merge_struct;
+use regex::Regex;
 use reqwest::blocking::get;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
-use std::{env, fs};
+use std::{default, env, fs};
 
 use tracing::warn;
 
@@ -430,6 +431,9 @@ pub struct Project {
 
     #[serde(rename = "actions")]
     pub actions: Option<Vec<Action>>,
+
+    #[serde(rename = "swaps")]
+    pub swaps: Option<Vec<Swap>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -448,6 +452,38 @@ pub struct CustomVendor {
 
     #[serde(rename = "base")]
     pub base: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Swap {
+    #[serde(rename = "key")]
+    pub key: String,
+
+    #[serde(rename = "val_template")]
+    pub val_template: Option<String>,
+
+    #[serde(rename = "val")]
+    pub val: Option<String>,
+
+    #[serde(rename = "path")]
+    #[serde(with = "serde_regex")]
+    #[serde(default)]
+    pub path: Option<Regex>,
+
+    #[serde(default)]
+    #[serde(rename = "kind")]
+    pub kind: SwapKind,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum SwapKind {
+    #[default]
+    #[serde(rename = "all")]
+    All,
+    #[serde(rename = "content")]
+    Content,
+    #[serde(rename = "path")]
+    Path,
 }
 
 #[cfg(test)]

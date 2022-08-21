@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::content::{Coordinate, Deployer};
+use crate::content::{Coordinate, Deployer, Swapper};
 use crate::data::Opts;
 use crate::fetch::Fetcher;
 use crate::git::{GitCmd, GitProvider};
@@ -8,6 +8,7 @@ use crate::ui::Prompt;
 use anyhow::{Context, Result};
 use interactive_actions::ActionRunner;
 use requestty_ui::events::KeyEvent;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 pub struct Runner {
@@ -111,6 +112,9 @@ impl Runner {
                     |evs| ActionRunner::with_events(acts, evs),
                 )
         });
+        //action_runner.as_mut().map(|ar| ar.varbag.extend())
+
+        let mut vars: BTreeMap<String, String> = BTreeMap::new();
 
         let deployer = Deployer::default();
 
@@ -120,7 +124,14 @@ impl Runner {
             location: &location,
             remove_source,
         };
-        let (files, maybe_actions) = deployer.deploy(coords, action_runner, opts, prompt)?;
+        let (files, maybe_actions) = deployer.deploy(
+            coords,
+            action_runner,
+            sl.swaps(&shortlink),
+            &mut vars,
+            opts,
+            prompt,
+        )?;
 
         prompt.say_done(&files, maybe_actions.as_ref());
         Ok(())

@@ -18,6 +18,7 @@ Ok(
                             source: External,
                             mode: None,
                             actions: None,
+                            swaps: None,
                         },
                     },
                 ),
@@ -38,6 +39,7 @@ Ok(
                             source: External,
                             mode: None,
                             actions: None,
+                            swaps: None,
                         },
                         "rust": Project {
                             shortlink: "rusty-ferris-club",
@@ -47,6 +49,7 @@ Ok(
                             source: External,
                             mode: None,
                             actions: None,
+                            swaps: None,
                         },
                     },
                 ),

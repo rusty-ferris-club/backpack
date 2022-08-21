@@ -21,6 +21,7 @@ Config {
                 source: External,
                 mode: None,
                 actions: None,
+                swaps: None,
             },
         },
     ),

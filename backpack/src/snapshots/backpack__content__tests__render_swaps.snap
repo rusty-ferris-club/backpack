@@ -1,0 +1,10 @@
+---
+source: backpack/src/content.rs
+expression: swaps
+---
+- key: key
+  val_template: "Hello {{world}}"
+  val: Hello crewl world
+  path: ~
+  kind: all
+
