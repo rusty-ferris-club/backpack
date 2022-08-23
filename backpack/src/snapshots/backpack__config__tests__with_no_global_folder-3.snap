@@ -18,7 +18,6 @@ expression: filled_config
                     shortlink: "rusty-ferris-club",
                     is_git: None,
                     description: None,
-                    run: None,
                     source: External,
                     mode: None,
                     actions: None,

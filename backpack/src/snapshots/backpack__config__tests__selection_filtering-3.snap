@@ -9,7 +9,6 @@ expression: "config.projects_for_selection(&CopyMode::All)"
             shortlink: "jondot/three",
             is_git: None,
             description: None,
-            run: None,
             source: Local,
             mode: None,
             actions: None,
@@ -22,7 +21,6 @@ expression: "config.projects_for_selection(&CopyMode::All)"
             shortlink: "jondot/two",
             is_git: None,
             description: None,
-            run: None,
             source: Local,
             mode: Some(
                 Apply,
@@ -37,7 +35,6 @@ expression: "config.projects_for_selection(&CopyMode::All)"
             shortlink: "jondot/one",
             is_git: None,
             description: None,
-            run: None,
             source: Local,
             mode: Some(
                 Copy,

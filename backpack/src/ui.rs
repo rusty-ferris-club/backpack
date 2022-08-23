@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::data::{CopyMode, Opts};
 use crate::run::RunnerEvents;
-use crate::swapper::CopyResult;
+use crate::templates::CopyResult;
 use anyhow::{anyhow, Context, Result as AnyResult};
 use console::style;
 use interactive_actions::data::ActionResult;

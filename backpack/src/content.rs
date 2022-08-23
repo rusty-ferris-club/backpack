@@ -1,5 +1,5 @@
 use crate::data::{CopyMode, Location, Opts, Overwrite};
-use crate::swapper::{CopyResult, Swap, Swapper};
+use crate::templates::{CopyResult, Swap, Swapper};
 use crate::ui::Prompt;
 use anyhow::Result;
 use interactive_actions::{

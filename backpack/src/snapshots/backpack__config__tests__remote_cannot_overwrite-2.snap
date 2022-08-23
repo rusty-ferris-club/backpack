@@ -18,7 +18,6 @@ expression: config_fully_loaded
                     shortlink: "correct/one",
                     is_git: None,
                     description: None,
-                    run: None,
                     source: Local,
                     mode: None,
                     actions: None,

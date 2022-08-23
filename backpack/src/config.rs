@@ -1,5 +1,5 @@
 use crate::data::CopyMode;
-use crate::swapper::Swap;
+use crate::templates::Swap;
 use anyhow::{anyhow, bail, Context, Result as AnyResult};
 use dirs;
 use interactive_actions::data::Action;
@@ -418,9 +418,6 @@ pub struct Project {
 
     #[serde(rename = "description")]
     pub description: Option<String>,
-
-    #[serde(rename = "run")]
-    pub run: Option<String>,
 
     #[serde(rename = "source")]
     #[serde(default)]

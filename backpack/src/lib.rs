@@ -13,6 +13,6 @@ pub mod fetch;
 pub mod git;
 pub mod run;
 pub mod shortlink;
-mod swapper;
+mod templates;
 pub mod ui;
 pub mod vendors;
