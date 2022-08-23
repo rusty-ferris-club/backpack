@@ -1,7 +1,8 @@
 use crate::{
-    config::{Config, Swap},
+    config::Config,
     data::{Assets, Location},
     git::GitProvider,
+    swapper::Swap,
     vendors::{Vendor, Vendors},
 };
 use anyhow::Result as AnyResult;

@@ -1,5 +1,7 @@
 use crate::config::Config;
 use crate::data::{CopyMode, Opts};
+use crate::run::RunnerEvents;
+use crate::swapper::CopyResult;
 use anyhow::{anyhow, Context, Result as AnyResult};
 use console::style;
 use interactive_actions::data::ActionResult;
@@ -17,6 +19,15 @@ pub struct Prompt<'a> {
 }
 
 impl<'a> Prompt<'a> {
+    pub fn build(config: &'a Config, show_progress: bool, events: Option<&RunnerEvents>) -> Self {
+        events
+            .and_then(|evs| evs.prompt_events.as_ref())
+            .map_or_else(
+                || Prompt::new(config, show_progress),
+                |evs| Prompt::with_events(config, evs.clone()),
+            )
+    }
+
     pub fn with_events(config: &'a Config, events: Vec<KeyEvent>) -> Self {
         Self {
             config,
@@ -43,24 +54,23 @@ impl<'a> Prompt<'a> {
         shortlink: Option<&str>,
         dest: Option<&str>,
         opts: &Opts,
-    ) -> AnyResult<(String, Option<String>)> {
-        let shortlink = if let Some(s) = shortlink {
-            s.to_string()
-        } else {
-            let project = self.pick_project(&opts.mode)?;
-            if let Some(project) = project {
-                project
-            } else {
-                self.input_shortlink()?
+    ) -> AnyResult<(String, Option<String>, bool)> {
+        match (shortlink, dest) {
+            (Some(s), Some(d)) => Ok((s.to_string(), Some(d.to_string()), false)),
+            (None, d) => {
+                let shortlink = if let Some(project) = self.pick_project(&opts.mode)? {
+                    project
+                } else {
+                    self.input_shortlink()?
+                };
+                Ok((shortlink, d.map(ToString::to_string), true))
             }
-        };
-
-        let dest = dest.map_or_else(
-            || self.input_dest(opts.mode == CopyMode::Copy),
-            |d| Ok(Some(d.to_string())),
-        )?;
-
-        Ok((shortlink, dest))
+            (Some(s), None) => Ok((
+                s.to_string(),
+                self.input_dest(opts.mode == CopyMode::Copy)?,
+                true,
+            )),
+        }
     }
 
     /// Returns the pick project of this [`Prompt`].
@@ -237,7 +247,7 @@ impl<'a> Prompt<'a> {
         }
     }
 
-    pub fn say_done(&self, res: &[String], maybe_actions: Option<&Vec<ActionResult>>) {
+    pub fn say_done(&self, res: &[CopyResult], maybe_actions: Option<&Vec<ActionResult>>) {
         if self.show_progress {
             let total = res.len();
             let total_actions = maybe_actions.map_or(0, Vec::len);
@@ -255,7 +265,12 @@ impl<'a> Prompt<'a> {
                 if i == 0 {
                     println!();
                 }
-                println!(" {} {}", style("+").green(), style(s).dim());
+                println!(
+                    " {} {} {}",
+                    style("+").green(),
+                    style(s.dest.display()).dim(),
+                    style(format!("{:?}", s.op)).yellow().dim()
+                );
             });
             if total > cutoff {
                 println!(

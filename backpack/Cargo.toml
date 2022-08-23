@@ -50,6 +50,7 @@ tracing-subscriber = { version = "^0.3.11", features = ["env-filter"] }
 interactive-actions = { version = "*", path = "../../interactive-actions/interactive-actions/" }
 tera = "^1.17.0"
 tera-text-filters = "^1.0.0"
+content_inspector = "0.2.4"
 
 [dev-dependencies]
 insta = { version = "1.17.1", features = ["backtrace", "redactions"] }

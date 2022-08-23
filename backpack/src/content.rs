@@ -1,16 +1,14 @@
-use crate::config::{Swap, SwapKind};
 use crate::data::{CopyMode, Location, Opts, Overwrite};
+use crate::swapper::{CopyResult, Swap, Swapper};
 use crate::ui::Prompt;
-use anyhow::{bail, Result};
+use anyhow::Result;
 use interactive_actions::{
     data::ActionResult,
     data::{Action, ActionHook},
     ActionRunner,
 };
 use std::collections::BTreeMap;
-use std::fs;
 use std::path::{Path, PathBuf};
-use tera::Tera;
 use tracing::warn;
 use walkdir;
 
@@ -34,7 +32,7 @@ impl Deployer {
         vars: &mut BTreeMap<String, String>,
         opts: &Opts,
         prompt: &mut Prompt<'_>,
-    ) -> Result<(Vec<String>, Option<Vec<ActionResult>>)> {
+    ) -> Result<(Vec<CopyResult>, Option<Vec<ActionResult>>)> {
         // xxx: either way canonicalize paths.
         let final_source = coord
             .source
@@ -63,17 +61,6 @@ impl Deployer {
             final_dest.parent().unwrap_or_else(|| Path::new("."))
         } else {
             final_dest.as_path()
-        };
-
-        let before_actions = if let Some(action_runner) = action_runner.as_mut() {
-            Some(action_runner.run(
-                Some(actions_dest),
-                vars,
-                ActionHook::Before,
-                Some(|action: &Action| prompt.say_action(action.name.as_str())),
-            )?)
-        } else {
-            None
         };
 
         let swapper = Swapper::with_vars(swaps, vars)?;
@@ -126,16 +113,7 @@ impl Deployer {
             None
         };
 
-        // just a fancy zip + fold of the two collections
-        let actions = [before_actions, after_actions]
-            .into_iter()
-            .flatten()
-            .reduce(|mut a, mut b| {
-                a.append(&mut b);
-                a
-            });
-
-        Ok((files, actions))
+        Ok((files, after_actions))
     }
 
     #[tracing::instrument(skip_all, err)]
@@ -147,11 +125,9 @@ impl Deployer {
         is_file: bool,
         overwrite: Overwrite,
         prompt: &mut Prompt<'_>,
-    ) -> Result<Vec<String>> {
-        // swapfs = Swaps::new
+    ) -> Result<Vec<CopyResult>> {
         if is_file {
-            let swapped = swapper.copy_to(source, dest)?;
-            return Ok(vec![swapped.display().to_string()]);
+            return Ok(vec![swapper.copy_to(source, dest)?]);
         }
 
         let mut copied = vec![];
@@ -185,299 +161,16 @@ impl Deployer {
                         };
                         if should_copy {
                             let to_swapped = swapper.copy_to(path, to_path)?;
-                            copied.push(to_swapped.display().to_string());
+                            copied.push(to_swapped);
                         }
                     } else {
-                        let to_swapped = swapper.copy_to(path, to_path)?; //swapfs.copy(..)
-                        copied.push(to_swapped.display().to_string());
+                        let to_swapped = swapper.copy_to(path, to_path)?;
+                        copied.push(to_swapped);
                     }
                 }
 
                 anyhow::Ok(())
             })?;
         Ok(copied)
-    }
-}
-
-pub struct Swapper {
-    swaps: Vec<Swap>,
-}
-impl Swapper {
-    ///
-    /// Create a swapper with fully populated swaps
-    ///
-    /// # Errors
-    /// Return errors when swaps cannot be populated, e.g. when a `val_template` is illegal
-    #[must_use]
-    pub fn with_vars(swaps: Option<&Vec<Swap>>, vars: &BTreeMap<String, String>) -> Result<Self> {
-        let empty = vec![];
-        let s = swaps.unwrap_or(&empty);
-        Ok(Self {
-            swaps: render_swaps(s, vars)?,
-        })
-    }
-
-    pub fn path(&self, p: &Path) -> PathBuf {
-        let pstr = p.display().to_string();
-        let mut s = pstr.clone();
-        for swap in &self.swaps {
-            if match_path(pstr.as_str(), swap) {
-                if let Some(val) = swap.val.as_ref() {
-                    s = s.replace(swap.key.as_str(), val);
-                }
-            }
-        }
-        PathBuf::from(s)
-    }
-    pub fn copy_to(&self, source: &Path, dest: &Path) -> Result<PathBuf> {
-        let swapped = self.path(dest);
-        let parent = dest
-            .parent()
-            .ok_or_else(|| anyhow::anyhow!("cannot get parent for {:?}", dest))?;
-        if !parent.exists() {
-            fs::create_dir_all(&parent)?;
-        };
-        fs::copy(source, &swapped)?; // swapfs.copy(s, d)
-        Ok(swapped)
-    }
-    pub fn exists(&self, dest: &Path) -> bool {
-        let p = self.path(dest);
-        p.exists()
-    }
-}
-
-fn render_swaps(swaps: &[Swap], varbag: &BTreeMap<String, String>) -> Result<Vec<Swap>> {
-    let mut tera = Tera::default();
-    tera_text_filters::register_all(&mut tera);
-    let context = tera::Context::from_serialize(varbag)?;
-    swaps
-        .iter()
-        .map(|swap| {
-            let val = match (swap.val.as_ref(), swap.val_template.as_ref()) {
-                (Some(v), _) => v.clone(),
-                (None, Some(v)) => tera.render_str(v, &context)?,
-                (None, None) => bail!("each swap should have either `val` or `val_template`"),
-            };
-            let mut s = swap.clone();
-            s.val = Some(val);
-            Ok(s)
-        })
-        .collect::<Result<Vec<_>>>()
-}
-
-fn match_path(p: &str, swap: &Swap) -> bool {
-    match swap.kind {
-        SwapKind::Path | SwapKind::All => swap.path.as_ref().map_or(true, |exp| exp.is_match(p)),
-        SwapKind::Content => false,
-    }
-}
-
-fn match_copy(p: &str, swap: &Swap) -> bool {
-    match swap.kind {
-        SwapKind::Content | SwapKind::All => swap.path.as_ref().map_or(true, |exp| exp.is_match(p)),
-        SwapKind::Path => false,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use regex::Regex;
-    use std::vec;
-
-    use insta::assert_yaml_snapshot;
-    use pretty_assertions::assert_eq;
-
-    use super::*;
-
-    #[test]
-    fn test_render_swaps() {
-        let mut h = BTreeMap::new();
-        h.insert("world".to_string(), "crewl world".to_string());
-
-        let swaps = render_swaps(
-            vec![Swap {
-                key: "key".to_string(),
-                val_template: Some("Hello {{world}}".to_string()),
-                val: None,
-                ..Default::default()
-            }]
-            .as_slice(),
-            &h,
-        )
-        .unwrap();
-        assert_yaml_snapshot!(swaps);
-    }
-
-    #[test]
-    fn test_render_swaps_inflections() {
-        let mut h = BTreeMap::new();
-        h.insert("world".to_string(), "crewl world".to_string());
-
-        let swaps = render_swaps(
-            vec![Swap {
-                key: "key".to_string(),
-                val_template: Some("Hello {{world | kebab_case}}".to_string()),
-                val: None,
-                ..Default::default()
-            }]
-            .as_slice(),
-            &h,
-        )
-        .unwrap();
-        assert_yaml_snapshot!(swaps);
-    }
-
-    #[test]
-    fn test_render_swaps_empty_context() {
-        let h = BTreeMap::new();
-
-        let swaps = render_swaps(
-            vec![Swap {
-                key: "key".to_string(),
-                val_template: Some("Hello {{world}}".to_string()),
-                val: None,
-                ..Default::default()
-            }]
-            .as_slice(),
-            &h,
-        );
-        assert_eq!(
-            swaps.unwrap_err().to_string(),
-            "Failed to render '__tera_one_off'"
-        );
-    }
-
-    #[test]
-    fn test_render_wrong_context() {
-        let mut h = BTreeMap::new();
-        h.insert("foobar".to_string(), "crewl world".to_string());
-
-        let swaps = render_swaps(
-            vec![Swap {
-                key: "key".to_string(),
-                val_template: Some("Hello {{world}}".to_string()),
-                val: None,
-                ..Default::default()
-            }]
-            .as_slice(),
-            &h,
-        );
-
-        assert_eq!(
-            swaps.unwrap_err().to_string(),
-            "Failed to render '__tera_one_off'"
-        );
-    }
-
-    #[test]
-    fn test_match_path() {
-        assert!(match_path("some/path", &Swap::default()));
-        assert!(match_path(
-            "some/path",
-            &Swap {
-                kind: SwapKind::All,
-                ..Default::default()
-            }
-        ));
-        assert!(match_path(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Path,
-                ..Default::default()
-            }
-        ));
-        assert!(!match_path(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Content,
-                ..Default::default()
-            }
-        ));
-        assert!(!match_path(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Path,
-                path: Some(Regex::new(".*foo").unwrap()),
-                ..Default::default()
-            }
-        ));
-        assert!(match_path(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Path,
-                path: Some(Regex::new("some/.*").unwrap()),
-                ..Default::default()
-            }
-        ));
-    }
-
-    #[test]
-    fn test_match_copy() {
-        assert!(match_copy("some/path", &Swap::default()));
-        assert!(match_copy(
-            "some/path",
-            &Swap {
-                kind: SwapKind::All,
-                ..Default::default()
-            }
-        ));
-        assert!(!match_copy(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Path,
-                ..Default::default()
-            }
-        ));
-        assert!(match_copy(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Content,
-                ..Default::default()
-            }
-        ));
-        assert!(!match_copy(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Content,
-                path: Some(Regex::new(".*foo").unwrap()),
-                ..Default::default()
-            }
-        ));
-        assert!(match_copy(
-            "some/path",
-            &Swap {
-                kind: SwapKind::Content,
-                path: Some(Regex::new("some/.*").unwrap()),
-                ..Default::default()
-            }
-        ));
-    }
-
-    #[test]
-    fn test_swap_path() {
-        let swaps = vec![Swap {
-            key: "$SWAPME$".to_string(),
-            kind: SwapKind::All,
-            val_template: Some("{{greeting | kebab_case}}".to_string()),
-            ..Default::default()
-        }];
-        let mut vars = BTreeMap::new();
-        vars.insert("greeting".into(), "hello world".into());
-
-        let swapper = Swapper::with_vars(Some(&swaps), &vars).unwrap();
-        assert_eq!(
-            "some/hello-world/path",
-            swapper
-                .path(Path::new("some/$SWAPME$/path"))
-                .display()
-                .to_string()
-        );
-        assert_eq!(
-            "some/naive/path",
-            swapper
-                .path(Path::new("some/naive/path"))
-                .display()
-                .to_string()
-        );
     }
 }

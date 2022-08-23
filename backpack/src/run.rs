@@ -1,11 +1,12 @@
 use crate::config::Config;
-use crate::content::{Coordinate, Deployer, Swapper};
+use crate::content::{Coordinate, Deployer};
 use crate::data::Opts;
 use crate::fetch::Fetcher;
 use crate::git::{GitCmd, GitProvider};
 use crate::shortlink::Shortlink;
 use crate::ui::Prompt;
 use anyhow::{Context, Result};
+use interactive_actions::data::{Action, ActionHook};
 use interactive_actions::ActionRunner;
 use requestty_ui::events::KeyEvent;
 use std::collections::BTreeMap;
@@ -72,27 +73,38 @@ impl Runner {
         }
 
         let config = config;
-        let prompt = &mut events
-            .and_then(|evs| evs.prompt_events.as_ref())
-            .map_or_else(
-                || Prompt::new(&config, opts.show_progress),
-                |evs| Prompt::with_events(&config, evs.clone()),
-            );
+        let prompt = &mut Prompt::build(&config, opts.show_progress, events);
 
-        let should_confirm = shortlink.is_none() || dest.is_none();
-
-        let (shortlink, dest) = prompt.fill_missing(shortlink, dest, opts)?;
+        let (shortlink, dest, should_confirm) = prompt.fill_missing(shortlink, dest, opts)?;
 
         // confirm
         if !opts.always_yes
             && should_confirm
             && !prompt.are_you_sure(&shortlink, dest.as_deref())?
         {
+            // bail out, user won't confirm
             return Ok(());
         }
 
-        prompt.say_resolving();
         let sl = Shortlink::new(&config, self.git.as_ref());
+
+        let actions = sl.actions(&shortlink);
+        let mut action_runner = actions.map(|acts| build_runner(acts, events));
+
+        let mut vars: BTreeMap<String, String> = BTreeMap::new();
+
+        // run 'before' actions. they're silent and mostly for prep and input so no need
+        // to print them out or print a summary
+        if let Some(action_runner) = action_runner.as_mut() {
+            action_runner.run(
+                dest.as_ref().map(Path::new),
+                &mut vars,
+                ActionHook::Before,
+                None::<fn(&Action)>,
+            )?;
+        }
+
+        prompt.say_resolving();
         let (location, assets) = sl.resolve(&shortlink, opts.is_git)?;
 
         let cached_path = Config::global_cache_folder()?;
@@ -100,21 +112,6 @@ impl Runner {
 
         prompt.say_fetching();
         let (source, remove_source) = fetcher.fetch(&location, &assets, opts.no_cache)?;
-
-        prompt.say_unpacking();
-        // rig runner with or without synthetic keyboard events
-        let actions = sl.actions(&shortlink);
-        let action_runner = actions.map(|acts| {
-            events
-                .and_then(|evs| evs.actions_events.clone())
-                .map_or_else(
-                    || ActionRunner::new(acts),
-                    |evs| ActionRunner::with_events(acts, evs),
-                )
-        });
-        //action_runner.as_mut().map(|ar| ar.varbag.extend())
-
-        let mut vars: BTreeMap<String, String> = BTreeMap::new();
 
         let deployer = Deployer::default();
 
@@ -124,6 +121,8 @@ impl Runner {
             location: &location,
             remove_source,
         };
+
+        prompt.say_unpacking();
         let (files, maybe_actions) = deployer.deploy(
             coords,
             action_runner,
@@ -136,4 +135,14 @@ impl Runner {
         prompt.say_done(&files, maybe_actions.as_ref());
         Ok(())
     }
+}
+
+/// build a runner with actions and if there are synthetic events, use them
+pub fn build_runner<'a>(acts: &'a [Action], events: Option<&RunnerEvents>) -> ActionRunner<'a> {
+    events
+        .and_then(|evs| evs.actions_events.clone())
+        .map_or_else(
+            || ActionRunner::new(acts),
+            |evs| ActionRunner::with_events(acts, evs),
+        )
 }
