@@ -121,6 +121,13 @@ impl Runner {
             location: &location,
             remove_source,
         };
+        /*
+        - move all actions back inside deployer
+        - action_runner should get actions in `run` to decouple
+        - so deploy should get: actions, swaps, rigged runner
+            - rigged runner could move to deployer ctor
+        - then, discovering source actions could be done here.
+         */
 
         prompt.say_unpacking();
         let (files, maybe_actions) = deployer.deploy(

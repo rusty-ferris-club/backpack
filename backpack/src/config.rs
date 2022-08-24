@@ -434,6 +434,24 @@ pub struct Project {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalProjectConfig {
+    #[serde(rename = "new")]
+    new: Option<LocalProject>,
+
+    #[serde(rename = "apply")]
+    apply: Option<LocalProject>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalProject {
+    #[serde(rename = "actions")]
+    pub actions: Option<Vec<Action>>,
+
+    #[serde(rename = "swaps")]
+    pub swaps: Option<Vec<Swap>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VendorsConfig {
     #[serde(rename = "default")]
     pub vendors_default: Option<CustomVendor>,
