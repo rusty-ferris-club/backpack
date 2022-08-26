@@ -17,13 +17,12 @@ Use template and starter projects easily.
 $ bp new user/repo
 ```
 
-:white_check_mark: A supercharged scaffolding machine   
-:white_check_mark: Grab **subfolders, branches, files**, or tags from template projects    
+:white_check_mark: Create **new projects** or **reuse parts** of projects.
+:white_check_mark: Supports grabbing **repos, subfolders, branches, files**, or tags
+:white_check_mark: Replace **variables** in content and path (like cookiecutter)   
 :white_check_mark: Run **custom actions**   
 :white_check_mark: Personalize shortlinks and projects for **individuals and teams**  
-:white_check_mark: **Fast clone**  
-:white_check_mark: **Overlay files** into current project  
-:white_check_mark: No history or `.git` folder   
+:white_check_mark: **Fast clone**, no history or `.git` folder
 :white_check_mark: Local **cache support**  
 
 
@@ -81,6 +80,17 @@ user/repo#wip -> takes the 'wip' branch
 
 :white_check_mark: Bare minimum is `user/repo` which defaults to Github.  
 :white_check_mark: You can set up a custom prefix if you want.  
+
+## :golf: Swaps, variables, and actions
+
+To maximize producitivity, you can do either of these, or all of these in sequence:
+
+1. Just copy material from a template repo, as a faster `git clone` that has built-in cache and knows how to take **parts of repos**.
+2. Embed **placeholder variables** in your template repo and have `backpack` swap these when doing `bp new` or `bp apply`
+3. **Execute actions** for input taking from a user, or for running install actions after a clone
+
+
+You can build a `.backpack-project.yml` into your template repo for defining actions and variables, or a `project` pointing to that repo in your central `backpack.yml`.
 
 ## :speedboat: Scaffolding interactively
 
@@ -144,12 +154,13 @@ For **private repos**, you might want to download over Git SSH protocol, add `--
 ```
 $ bp new kriasoft/react-starter-kit --git
 ```
-# :joystick:	Using Projects
+# :joystick:	Using projects
 
 A project is:
 
 * A shortcut for a repo, subfolder, or files
 * A set of actions (inspired by Github Actions) to run automatically after fetching content
+* A set of **swaps** which define replacement variables to perform while copying content, such as the name of the project, and/or author name
 
 
 `backpack` is built for teams. This means you can configure your own shortcuts (called `projects`) to Git hosting vendors, organizations, and repos.
@@ -195,7 +206,7 @@ $ bp new rust-starter
 
 Which will resolve to the correct location. Note: projects will automatically resolve custom Git vendors (see below for what these are).
 
-### :rotating_light:	 Using Actions
+### :rotating_light:	 Using actions
 
 Here's a full project configuration example with actions:
 
@@ -237,8 +248,72 @@ actions:
       prompt: name of your app?
       out: name
     run: yarn run init-app {{db}} {{name}}
-
 ```
+
+Actions have a `before` and `after` hook, which make them run **before** copying content (e.g. user input), and **after** the content have being copied (e.g. installing dependencies).
+
+By default actions are hooked to the `after` event, but you can change it:
+
+```yaml
+- name: name
+  hook: before
+  interaction:
+    kind: input
+    prompt: name of your project
+    out: project_name
+```
+
+### :bulb:	 Using swaps
+
+Define **keys to swap**, where a key can be anything really. Unlike _cookiecutter_, this allows for a fully-building and functioning **template repos** which you can test in CI.
+
+
+Notes:
+
+* Swaps happen both in content and path, and you can limit to one of those.
+* You can limit to a path with a regex
+* You can use a `val_template` which pulls a variable from those you gathered while running actions. You also have a set of inflections such as `{{project_name | kebab_case}}`
+
+```yaml
+projects:
+  my-project:
+    shortlink: kriasoft/react-starter-kit
+    swaps:
+    - key: MIT
+      val: Apache 2.0
+      path: README.md
+    - key: AUTHOR_NAME
+      val_template: Dr. {{user_name}}
+      path: src/.*
+```
+
+
+## :smiley: Building dedicated template Repos
+
+If you include a `.backpack.yml` file in a repo, `backpack` will use it to understand which actions and swaps to make while copying content.
+
+See [this example](https://github.com/rusty-ferris-club/backpack-e2e-frozen-localproj/blob/main/.backpack-project.yml):
+
+```yml
+version: 1
+new:
+    shortlink: ""
+    actions:
+    - name: name
+      hook: before
+      interaction:
+        kind: input
+        prompt: name of your project
+        out: project_name
+    swaps:
+    - key: crewl
+      val_template: "{{project_name}}"
+      path: .*
+```
+
+You can set different actions and swaps for when people do `bp new` vs `bp apply`.
+
+For file operations such as renaming, moving and so on, you can use vanilla actions (`mv x y`, `rm x`).
 
 
 ## :link: Sharing your projects

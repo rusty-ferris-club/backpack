@@ -1,0 +1,6 @@
+---
+source: backpack/tests/runner_test.rs
+expression: "fs::read_to_string(\"tests-out/my-project1/test.txt\").unwrap()"
+---
+"hello foo world\nfoo, foo world.\n"
+

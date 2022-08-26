@@ -201,6 +201,7 @@ impl<'a> Prompt<'a> {
                 shortlink,
                 dest.unwrap_or("a default folder"),
             ))
+            .default(true)
             .build();
 
         Ok(self.prompt_one(question)?.as_bool().unwrap_or(false))

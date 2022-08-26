@@ -75,7 +75,7 @@ pub struct CopyResult {
 pub enum SwapOp {
     #[default]
     Copied,
-    Rendered,
+    Rendered(usize),
 }
 
 impl Swapper {
@@ -102,14 +102,16 @@ impl Swapper {
         PathBuf::from(s)
     }
 
-    pub fn render_content<'a>(content_swaps: &[&Swap], original: &'a str) -> Cow<'a, str> {
+    pub fn render_content<'a>(content_swaps: &[&Swap], original: &'a str) -> (Cow<'a, str>, usize) {
         let mut out: Cow<'_, str> = original.into();
+        let mut count = 0;
         for swap in content_swaps {
             if let Some(val) = swap.val.as_ref() {
+                count += out.matches(swap.key.as_str()).count();
                 out = out.replace(swap.key.as_str(), val).into();
             }
         }
-        out
+        (out, count)
     }
 
     /// Copy from `source` to `dest`, creating all folders if missing in `dest`
@@ -145,11 +147,11 @@ impl Swapper {
         let original = fs::read(source).with_context(|| format!("reading {}", source.display()))?;
         if inspect(&original).is_text() {
             let read = String::from_utf8(original)?;
-            let contents = Self::render_content(&content_swaps, read.as_str());
+            let (contents, count) = Self::render_content(&content_swaps, read.as_str());
             fs::write(&swapped, contents.as_bytes())?;
             return Ok(CopyResult {
                 dest: swapped,
-                op: SwapOp::Rendered,
+                op: SwapOp::Rendered(count),
             });
         }
 

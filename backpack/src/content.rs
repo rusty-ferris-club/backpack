@@ -1,5 +1,6 @@
+use crate::config::ProjectSetupActions;
 use crate::data::{CopyMode, Location, Opts, Overwrite};
-use crate::templates::{CopyResult, Swap, Swapper};
+use crate::templates::{CopyResult, Swapper};
 use crate::ui::Prompt;
 use anyhow::Result;
 use interactive_actions::{
@@ -19,16 +20,22 @@ pub struct Coordinate<'a> {
     pub remove_source: bool,
 }
 
-#[derive(Default)]
-pub struct Deployer {}
+pub struct Deployer<'a> {
+    action_runner: &'a mut ActionRunner,
+}
 
-impl Deployer {
+const DONT_COPY: &[&str] = &[".git", ".backpack-project.yml"];
+
+impl<'a> Deployer<'a> {
+    pub fn new(action_runner: &'a mut ActionRunner) -> Self {
+        Self { action_runner }
+    }
+
     #[tracing::instrument(skip_all, err)]
     pub fn deploy(
-        &self,
+        &mut self,
         coord: Coordinate<'_>,
-        mut action_runner: Option<ActionRunner<'_>>,
-        swaps: Option<&Vec<Swap>>,
+        project_setup: Option<ProjectSetupActions>,
         vars: &mut BTreeMap<String, String>,
         opts: &Opts,
         prompt: &mut Prompt<'_>,
@@ -62,6 +69,20 @@ impl Deployer {
         } else {
             final_dest.as_path()
         };
+
+        let (actions, swaps) = project_setup
+            .as_ref()
+            .map_or((None, None), |p| (p.actions.as_ref(), p.swaps.as_ref()));
+
+        if let Some(actions) = actions {
+            self.action_runner.run(
+                actions,
+                Some(actions_dest),
+                vars,
+                ActionHook::Before,
+                None::<fn(&Action)>,
+            )?;
+        }
 
         let swapper = Swapper::with_vars(swaps, vars)?;
         let files = match opts.mode {
@@ -102,8 +123,9 @@ impl Deployer {
             );
         }
 
-        let after_actions = if let Some(action_runner) = action_runner.as_mut() {
-            Some(action_runner.run(
+        let after_actions = if let Some(actions) = actions {
+            Some(self.action_runner.run(
+                actions,
                 Some(actions_dest),
                 vars,
                 ActionHook::After,
@@ -133,9 +155,14 @@ impl Deployer {
         let mut copied = vec![];
         walkdir::WalkDir::new(source)
             .into_iter()
+            .filter_entry(|entry| {
+                let path = entry.path();
+                !DONT_COPY.iter().any(|c| path.ends_with(c))
+            })
             .try_for_each(|entry| {
                 let entry = entry?;
                 let path = entry.path();
+
                 if path.is_file() {
                     let to = dest.join(path.strip_prefix(source)?);
                     let to_path = to.as_path();

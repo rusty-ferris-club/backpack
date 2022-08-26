@@ -1,12 +1,11 @@
-use crate::config::Config;
+use crate::config::{Config, LocalProjectConfig};
 use crate::content::{Coordinate, Deployer};
-use crate::data::Opts;
+use crate::data::{CopyMode, Opts};
 use crate::fetch::Fetcher;
 use crate::git::{GitCmd, GitProvider};
 use crate::shortlink::Shortlink;
 use crate::ui::Prompt;
 use anyhow::{Context, Result};
-use interactive_actions::data::{Action, ActionHook};
 use interactive_actions::ActionRunner;
 use requestty_ui::events::KeyEvent;
 use std::collections::BTreeMap;
@@ -88,21 +87,7 @@ impl Runner {
 
         let sl = Shortlink::new(&config, self.git.as_ref());
 
-        let actions = sl.actions(&shortlink);
-        let mut action_runner = actions.map(|acts| build_runner(acts, events));
-
         let mut vars: BTreeMap<String, String> = BTreeMap::new();
-
-        // run 'before' actions. they're silent and mostly for prep and input so no need
-        // to print them out or print a summary
-        if let Some(action_runner) = action_runner.as_mut() {
-            action_runner.run(
-                dest.as_ref().map(Path::new),
-                &mut vars,
-                ActionHook::Before,
-                None::<fn(&Action)>,
-            )?;
-        }
 
         prompt.say_resolving();
         let (location, assets) = sl.resolve(&shortlink, opts.is_git)?;
@@ -113,7 +98,25 @@ impl Runner {
         prompt.say_fetching();
         let (source, remove_source) = fetcher.fetch(&location, &assets, opts.no_cache)?;
 
-        let deployer = Deployer::default();
+        // 1st priority: config project actions
+        let config_project_setup = sl.setup_actions(&shortlink);
+
+        // 2nd priority: source project actions
+        let source_project_setup = if LocalProjectConfig::exists(source.as_path()) {
+            let local_project = LocalProjectConfig::load(source.as_path())?;
+            if opts.mode == CopyMode::Copy {
+                local_project.new
+            } else {
+                local_project.apply
+            }
+        } else {
+            None
+        };
+
+        let project_setup = config_project_setup.or(source_project_setup);
+
+        let mut action_runner = build_runner(events);
+        let mut deployer = Deployer::new(&mut action_runner);
 
         let coords = Coordinate {
             source: source.as_path(),
@@ -121,23 +124,9 @@ impl Runner {
             location: &location,
             remove_source,
         };
-        /*
-        - move all actions back inside deployer
-        - action_runner should get actions in `run` to decouple
-        - so deploy should get: actions, swaps, rigged runner
-            - rigged runner could move to deployer ctor
-        - then, discovering source actions could be done here.
-         */
-
         prompt.say_unpacking();
-        let (files, maybe_actions) = deployer.deploy(
-            coords,
-            action_runner,
-            sl.swaps(&shortlink),
-            &mut vars,
-            opts,
-            prompt,
-        )?;
+        let (files, maybe_actions) =
+            deployer.deploy(coords, project_setup, &mut vars, opts, prompt)?;
 
         prompt.say_done(&files, maybe_actions.as_ref());
         Ok(())
@@ -145,11 +134,11 @@ impl Runner {
 }
 
 /// build a runner with actions and if there are synthetic events, use them
-pub fn build_runner<'a>(acts: &'a [Action], events: Option<&RunnerEvents>) -> ActionRunner<'a> {
+pub fn build_runner<'a>(events: Option<&RunnerEvents>) -> ActionRunner {
     events
         .and_then(|evs| evs.actions_events.clone())
         .map_or_else(
-            || ActionRunner::new(acts),
-            |evs| ActionRunner::with_events(acts, evs),
+            || ActionRunner::default(),
+            |evs| ActionRunner::with_events(evs),
         )
 }

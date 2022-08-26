@@ -3,7 +3,7 @@ use std::{env, fs};
 use backpack::config::Config;
 use backpack::data::{CopyMode, Opts};
 use backpack::run::{Runner, RunnerEvents};
-use insta::assert_debug_snapshot;
+use insta::{assert_debug_snapshot, assert_yaml_snapshot};
 use requestty_ui::events::KeyCode;
 use serial_test::serial;
 use walkdir::{DirEntry, WalkDir};
@@ -36,6 +36,7 @@ fn run(
     dest: Option<&str>,
     mode: CopyMode,
     local_config: Option<&str>,
+    is_git: bool,
     events: Option<RunnerEvents>,
 ) -> Vec<String> {
     let tests_out = "tests-out";
@@ -55,7 +56,7 @@ fn run(
             &Opts {
                 show_progress: false,
                 overwrite: false,
-                is_git: false,
+                is_git,
                 no_cache: false,
                 always_yes: true,
                 remote: None,
@@ -87,10 +88,11 @@ fn run_with_no_config(
     shortlink: Option<&str>,
     dest: Option<&str>,
     mode: CopyMode,
+    is_git: bool,
     events: Option<RunnerEvents>,
 ) -> Vec<String> {
     ensure_no_config();
-    run(shortlink, dest, mode, None, events)
+    run(shortlink, dest, mode, None, is_git, events)
 }
 
 fn run_with_local_config(
@@ -98,11 +100,12 @@ fn run_with_local_config(
     dest: Option<&str>,
     mode: CopyMode,
     config: &str,
+    is_git: bool,
     events: Option<RunnerEvents>,
 ) -> Vec<String> {
     ensure_no_config();
     env::remove_var("BP_CONF");
-    run(shortlink, dest, mode, Some(config), events)
+    run(shortlink, dest, mode, Some(config), is_git, events)
 }
 
 #[test]
@@ -112,6 +115,7 @@ fn test_run_source_dest() {
         Some("rusty-ferris-club/backpack-e2e-frozen"),
         Some("out"),
         CopyMode::Copy,
+        false,
         None,
     ));
 }
@@ -123,6 +127,7 @@ fn test_run_source_dest_subfolder() {
         Some("rusty-ferris-club/backpack-e2e-frozen/-/.github"),
         Some("out"),
         CopyMode::Copy,
+        false,
         None,
     ));
 }
@@ -134,6 +139,7 @@ fn test_run_source_dest_single_file() {
         Some("rusty-ferris-club/backpack-e2e-frozen/-/.github/workflows/build.yml"),
         Some("out/build.yml"),
         CopyMode::Copy,
+        false,
         None,
     ));
 }
@@ -145,6 +151,7 @@ fn test_run_source_single_file() {
         Some("rusty-ferris-club/backpack-e2e-frozen/-/.github/workflows/build.yml"),
         None,
         CopyMode::Apply,
+        false,
         Some(RunnerEvents {
             prompt_events: Some(vec![
                 KeyCode::Enter.into(),     // no dest
@@ -161,6 +168,7 @@ fn test_run_source_gist() {
         Some("https://gist.github.com/jondot/15086f59dab44f30bb10f82ca09f4887"),
         None,
         CopyMode::Apply,
+        false,
         Some(RunnerEvents {
             prompt_events: Some(vec![
                 KeyCode::Enter.into(),     // no dest
@@ -168,6 +176,52 @@ fn test_run_source_gist() {
             actions_events: None,
         }),
     ));
+}
+
+#[test]
+#[serial]
+fn test_run_with_local_project_actions() {
+    assert_yaml_snapshot!(run_with_no_config(
+        Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
+        None,
+        CopyMode::Copy,
+        false,
+        Some(RunnerEvents {
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(), // default name
+            ]),
+            actions_events: Some(vec![
+                KeyCode::Char('f').into(), // name: 'foo'
+                KeyCode::Char('o').into(), //
+                KeyCode::Char('o').into(), //
+                KeyCode::Enter.into(),     //
+            ]),
+        }),
+    ));
+    assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project1/test.txt").unwrap());
+}
+
+#[test]
+#[serial]
+fn test_run_with_local_project_actions_git_mode() {
+    assert_yaml_snapshot!(run_with_no_config(
+        Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
+        None,
+        CopyMode::Copy,
+        true,
+        Some(RunnerEvents {
+            prompt_events: Some(vec![
+                KeyCode::Enter.into(), // default name
+            ]),
+            actions_events: Some(vec![
+                KeyCode::Char('f').into(), // name: 'foo'
+                KeyCode::Char('o').into(), //
+                KeyCode::Char('o').into(), //
+                KeyCode::Enter.into(),     //
+            ]),
+        }),
+    ));
+    assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project1/test.txt").unwrap());
 }
 
 #[test]
@@ -193,6 +247,7 @@ projects:
         out: name
       run: touch {{name}}.txt
 "#,
+        false,
         Some(RunnerEvents {
             actions_events: Some(vec![
                 KeyCode::Char('y').into(), // yes
@@ -233,6 +288,7 @@ projects:
         out: name
       run: touch {{name}}.txt
 "#,
+        false,
         Some(RunnerEvents {
             actions_events: Some(vec![
                 KeyCode::Char('n').into(), // yes
@@ -269,6 +325,7 @@ projects:
         out: name
       run: touch {{name}}.txt
 "#,
+        false,
         Some(RunnerEvents {
             actions_events: Some(vec![
                 KeyCode::Char('y').into(), // yes
@@ -308,6 +365,7 @@ projects:
         out: name
       run: touch {{name}}.txt
 "#,
+        false,
         Some(RunnerEvents {
             actions_events: Some(vec![
                 KeyCode::Char('n').into(), // yes

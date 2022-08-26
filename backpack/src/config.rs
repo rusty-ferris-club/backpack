@@ -436,14 +436,29 @@ pub struct Project {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalProjectConfig {
     #[serde(rename = "new")]
-    new: Option<LocalProject>,
+    pub new: Option<ProjectSetupActions>,
 
     #[serde(rename = "apply")]
-    apply: Option<LocalProject>,
+    pub apply: Option<ProjectSetupActions>,
+}
+impl LocalProjectConfig {
+    const FILE: &str = ".backpack-project.yml";
+    /// Load a project-local config
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub fn load(path: &Path) -> AnyResult<Self> {
+        let conf: Self = serde_yaml::from_str(&fs::read_to_string(path.join(Self::FILE))?)?;
+        Ok(conf)
+    }
+    pub fn exists(path: &Path) -> bool {
+        path.join(Self::FILE).exists()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LocalProject {
+pub struct ProjectSetupActions {
     #[serde(rename = "actions")]
     pub actions: Option<Vec<Action>>,
 

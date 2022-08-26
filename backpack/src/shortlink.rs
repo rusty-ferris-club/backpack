@@ -1,5 +1,5 @@
 use crate::{
-    config::Config,
+    config::{Config, ProjectSetupActions},
     data::{Assets, Location},
     git::GitProvider,
     templates::Swap,
@@ -105,6 +105,15 @@ impl<'a> Shortlink<'a> {
         self.config
             .project(shortlink)
             .and_then(|project| project.swaps.as_ref())
+    }
+
+    pub fn setup_actions(&self, shortlink: &str) -> Option<ProjectSetupActions> {
+        self.config
+            .project(shortlink)
+            .map(|project| ProjectSetupActions {
+                actions: project.actions.clone(),
+                swaps: project.swaps.clone(),
+            })
     }
 }
 

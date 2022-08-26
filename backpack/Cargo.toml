@@ -47,7 +47,7 @@ requestty = "0.4.0"
 requestty-ui = "0.4.0"
 tracing-forest = { version = "^0.1.4" }
 tracing-subscriber = { version = "^0.3.11", features = ["env-filter"] }
-interactive-actions = { version = "*", path = "../../interactive-actions/interactive-actions/" }
+interactive-actions = "1"
 tera = "^1.17.0"
 tera-text-filters = "^1.0.0"
 content_inspector = "0.2.4"

@@ -1,0 +1,6 @@
+---
+source: backpack/tests/runner_test.rs
+expression: "run_with_no_config(Some(\"rusty-ferris-club/backpack-e2e-frozen-localproj\"),\n    None, CopyMode::Copy,\n    Some(RunnerEvents {\n            prompt_events: Some(vec![KeyCode :: Enter.into(),]),\n            actions_events: Some(vec![KeyCode :: Char('f').into(), KeyCode ::\n                    Char('o').into(), KeyCode :: Char('o').into(), KeyCode ::\n                    Enter.into(),]),\n        }))"
+---
+- tests-out/my-project1/test.txt
+
