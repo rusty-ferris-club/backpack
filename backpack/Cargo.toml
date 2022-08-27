@@ -59,6 +59,7 @@ rstest = "^0.14.0"
 pretty_assertions = "1"
 serial_test = "0.4.0"
 
+
 [build-dependencies]
 vergen = "7"
 anyhow = "1"

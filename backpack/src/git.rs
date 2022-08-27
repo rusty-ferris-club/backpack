@@ -121,6 +121,7 @@ impl GitProvider for GitCmd {
             .args(&args)
             .output()
             .context("git handling failed")?;
+
         if !output.status.success() {
             anyhow::bail!(
                 "cannot clone: {}\n---\n{}",

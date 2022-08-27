@@ -453,7 +453,11 @@ mod tests {
             )
             .unwrap();
         assert_yaml_snapshot!(
-            fs::read_to_string("tests-out/fixtures/content/swapped/hey.txt").unwrap()
+            fs::read_to_string("tests-out/fixtures/content/swapped/hey.txt")
+                .unwrap()
+                .lines()
+                .collect::<Vec<_>>()
+                .join("\n")
         );
     }
 }

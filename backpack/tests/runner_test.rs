@@ -1,5 +1,6 @@
 use std::{env, fs};
 
+use anyhow::Result;
 use backpack::config::Config;
 use backpack::data::{CopyMode, Opts};
 use backpack::run::{Runner, RunnerEvents};
@@ -38,7 +39,7 @@ fn run(
     local_config: Option<&str>,
     is_git: bool,
     events: Option<RunnerEvents>,
-) -> Vec<String> {
+) -> Result<Vec<String>> {
     let tests_out = "tests-out";
     fs::remove_dir_all(tests_out).ok();
     fs::create_dir(tests_out).unwrap();
@@ -49,7 +50,7 @@ fn run(
         fs::write(".backpack.yaml", config).unwrap();
     }
 
-    let _res = if let Some(events) = events {
+    if let Some(events) = events {
         Runner::default().run_with_events(
             shortlink,
             dest,
@@ -63,7 +64,7 @@ fn run(
                 mode,
             },
             &events,
-        )
+        )?;
     } else {
         Runner::default().run(
             shortlink,
@@ -77,11 +78,11 @@ fn run(
                 remote: None,
                 mode,
             },
-        )
+        )?;
     };
 
     env::set_current_dir(current_dir).unwrap();
-    list_folder(tests_out)
+    Ok(list_folder(tests_out))
 }
 
 fn run_with_no_config(
@@ -90,7 +91,7 @@ fn run_with_no_config(
     mode: CopyMode,
     is_git: bool,
     events: Option<RunnerEvents>,
-) -> Vec<String> {
+) -> Result<Vec<String>> {
     ensure_no_config();
     run(shortlink, dest, mode, None, is_git, events)
 }
@@ -102,7 +103,7 @@ fn run_with_local_config(
     config: &str,
     is_git: bool,
     events: Option<RunnerEvents>,
-) -> Vec<String> {
+) -> Result<Vec<String>> {
     ensure_no_config();
     env::remove_var("BP_CONF");
     run(shortlink, dest, mode, Some(config), is_git, events)
@@ -197,31 +198,36 @@ fn test_run_with_local_project_actions() {
                 KeyCode::Enter.into(),     //
             ]),
         }),
-    ));
+    )
+    .unwrap());
     assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project1/test.txt").unwrap());
 }
 
 #[test]
 #[serial]
 fn test_run_with_local_project_actions_git_mode() {
-    assert_yaml_snapshot!(run_with_no_config(
-        Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
-        None,
-        CopyMode::Copy,
-        true,
-        Some(RunnerEvents {
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(), // default name
-            ]),
-            actions_events: Some(vec![
-                KeyCode::Char('f').into(), // name: 'foo'
-                KeyCode::Char('o').into(), //
-                KeyCode::Char('o').into(), //
-                KeyCode::Enter.into(),     //
-            ]),
-        }),
-    ));
-    assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project1/test.txt").unwrap());
+    // dont run this in CI, git requires a registered identity
+    if env::var("CI").is_err() {
+        run_with_no_config(
+            Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
+            None,
+            CopyMode::Copy,
+            true,
+            Some(RunnerEvents {
+                prompt_events: Some(vec![
+                    KeyCode::Enter.into(), // default name
+                ]),
+                actions_events: Some(vec![
+                    KeyCode::Char('f').into(), // name: 'foo'
+                    KeyCode::Char('o').into(), //
+                    KeyCode::Char('o').into(), //
+                    KeyCode::Enter.into(),     //
+                ]),
+            }),
+        )
+        .unwrap();
+        assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project/test.txt").unwrap());
+    }
 }
 
 #[test]
