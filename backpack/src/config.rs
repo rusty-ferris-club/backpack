@@ -442,7 +442,7 @@ pub struct LocalProjectConfig {
     pub apply: Option<ProjectSetupActions>,
 }
 impl LocalProjectConfig {
-    const FILE: &str = ".backpack-project.yml";
+    const FILE: &'static str = ".backpack-project.yml";
     /// Load a project-local config
     ///
     /// # Errors

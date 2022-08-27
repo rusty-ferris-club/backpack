@@ -134,11 +134,8 @@ impl Runner {
 }
 
 /// build a runner with actions and if there are synthetic events, use them
-pub fn build_runner<'a>(events: Option<&RunnerEvents>) -> ActionRunner {
+pub fn build_runner(events: Option<&RunnerEvents>) -> ActionRunner {
     events
         .and_then(|evs| evs.actions_events.clone())
-        .map_or_else(
-            || ActionRunner::default(),
-            |evs| ActionRunner::with_events(evs),
-        )
+        .map_or_else(ActionRunner::default, ActionRunner::with_events)
 }
