@@ -17,13 +17,13 @@ Use template and starter projects easily.
 $ bp new user/repo
 ```
 
-:white_check_mark: Create **new projects** or **reuse parts** of projects.
-:white_check_mark: Supports grabbing **repos, subfolders, branches, files**, or tags
-:white_check_mark: Replace **variables** in content and path (like cookiecutter)   
-:white_check_mark: Run **custom actions**   
-:white_check_mark: Personalize shortlinks and projects for **individuals and teams**  
-:white_check_mark: **Fast clone**, no history or `.git` folder
-:white_check_mark: Local **cache support**  
+:white_check_mark: Create **new projects** or **reuse parts** of projects.    
+:white_check_mark: Supports grabbing **repos, subfolders, branches, files**, or tags     
+:white_check_mark: Replace **variables** in content and path (like cookiecutter)     
+:white_check_mark: Run **custom actions**    
+:white_check_mark: Personalize shortlinks and projects for **individuals and teams**   
+:white_check_mark: **Fast clone**, no history or `.git` folder    
+:white_check_mark: Local **cache support**    
 
 
 
