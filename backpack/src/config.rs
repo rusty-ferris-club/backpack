@@ -1,4 +1,5 @@
 use crate::data::CopyMode;
+use crate::templates::Swap;
 use anyhow::{anyhow, bail, Context, Result as AnyResult};
 use dirs;
 use interactive_actions::data::Action;
@@ -418,9 +419,6 @@ pub struct Project {
     #[serde(rename = "description")]
     pub description: Option<String>,
 
-    #[serde(rename = "run")]
-    pub run: Option<String>,
-
     #[serde(rename = "source")]
     #[serde(default)]
     pub source: ProjectSourceKind,
@@ -430,6 +428,42 @@ pub struct Project {
 
     #[serde(rename = "actions")]
     pub actions: Option<Vec<Action>>,
+
+    #[serde(rename = "swaps")]
+    pub swaps: Option<Vec<Swap>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalProjectConfig {
+    #[serde(rename = "new")]
+    pub new: Option<ProjectSetupActions>,
+
+    #[serde(rename = "apply")]
+    pub apply: Option<ProjectSetupActions>,
+}
+impl LocalProjectConfig {
+    const FILE: &'static str = ".backpack-project.yml";
+    /// Load a project-local config
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub fn load(path: &Path) -> AnyResult<Self> {
+        let conf: Self = serde_yaml::from_str(&fs::read_to_string(path.join(Self::FILE))?)?;
+        Ok(conf)
+    }
+    pub fn exists(path: &Path) -> bool {
+        path.join(Self::FILE).exists()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectSetupActions {
+    #[serde(rename = "actions")]
+    pub actions: Option<Vec<Action>>,
+
+    #[serde(rename = "swaps")]
+    pub swaps: Option<Vec<Swap>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

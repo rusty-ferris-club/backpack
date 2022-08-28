@@ -1,0 +1,6 @@
+---
+source: backpack/src/content.rs
+expression: "fs::read_to_string(\"tests-out/fixtures/content/swapped/hey.txt\").unwrap()"
+---
+"Hey Johnny, make it bad.\nTake a sad song and make it worse.\nRemember to let her into your heart,\nThen you can start to make it worse.\nthis will not get swapped: SWAP_ME\n"
+

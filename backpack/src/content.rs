@@ -1,8 +1,14 @@
+use crate::config::ProjectSetupActions;
 use crate::data::{CopyMode, Location, Opts, Overwrite};
+use crate::templates::{CopyResult, Swapper};
 use crate::ui::Prompt;
 use anyhow::Result;
-use interactive_actions::{data::Action, data::ActionResult, ActionRunner};
-use std::fs;
+use interactive_actions::{
+    data::ActionResult,
+    data::{Action, ActionHook},
+    ActionRunner,
+};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use tracing::warn;
 use walkdir;
@@ -14,18 +20,26 @@ pub struct Coordinate<'a> {
     pub remove_source: bool,
 }
 
-#[derive(Default)]
-pub struct Deployer {}
+pub struct Deployer<'a> {
+    action_runner: &'a mut ActionRunner,
+}
 
-impl Deployer {
+const DONT_COPY: &[&str] = &[".git", ".backpack-project.yml"];
+
+impl<'a> Deployer<'a> {
+    pub fn new(action_runner: &'a mut ActionRunner) -> Self {
+        Self { action_runner }
+    }
+
     #[tracing::instrument(skip_all, err)]
     pub fn deploy(
-        &self,
+        &mut self,
         coord: Coordinate<'_>,
-        mut action_runner: Option<ActionRunner<'_>>,
+        project_setup: Option<ProjectSetupActions>,
+        vars: &mut BTreeMap<String, String>,
         opts: &Opts,
         prompt: &mut Prompt<'_>,
-    ) -> Result<(Vec<String>, Option<Vec<ActionResult>>)> {
+    ) -> Result<(Vec<CopyResult>, Option<Vec<ActionResult>>)> {
         // xxx: either way canonicalize paths.
         let final_source = coord
             .source
@@ -50,12 +64,34 @@ impl Deployer {
                 .unwrap_or_else(|| PathBuf::from(".".to_string()))
         };
 
+        let actions_dest = if is_file {
+            final_dest.parent().unwrap_or_else(|| Path::new("."))
+        } else {
+            final_dest.as_path()
+        };
+
+        let (actions, swaps) = project_setup
+            .as_ref()
+            .map_or((None, None), |p| (p.actions.as_ref(), p.swaps.as_ref()));
+
+        if let Some(actions) = actions {
+            self.action_runner.run(
+                actions,
+                Some(actions_dest),
+                vars,
+                ActionHook::Before,
+                None::<fn(&Action)>,
+            )?;
+        }
+
+        let swapper = Swapper::with_vars(swaps, vars)?;
         let files = match opts.mode {
             CopyMode::Copy => {
                 if final_dest.exists() {
                     anyhow::bail!("path already exists: {}", final_dest.display());
                 }
                 self.copy(
+                    &swapper,
                     &final_source,
                     &final_dest,
                     is_file,
@@ -64,6 +100,7 @@ impl Deployer {
                 )?
             }
             CopyMode::Apply => self.copy(
+                &swapper,
                 &final_source,
                 &final_dest,
                 is_file,
@@ -86,77 +123,76 @@ impl Deployer {
             );
         }
 
-        let actions = if let Some(action_runner) = action_runner.as_mut() {
-            let actions_dest = if is_file {
-                final_dest.parent().unwrap_or_else(|| Path::new("."))
-            } else {
-                final_dest.as_path()
-            };
-
-            Some(action_runner.run(
+        let after_actions = if let Some(actions) = actions {
+            Some(self.action_runner.run(
+                actions,
                 Some(actions_dest),
+                vars,
+                ActionHook::After,
                 Some(|action: &Action| prompt.say_action(action.name.as_str())),
             )?)
         } else {
             None
         };
 
-        // copy vs apply
-        Ok((files, actions))
+        Ok((files, after_actions))
     }
 
     #[tracing::instrument(skip_all, err)]
     fn copy(
         &self,
+        swapper: &Swapper,
         source: &Path,
         dest: &Path,
         is_file: bool,
         overwrite: Overwrite,
         prompt: &mut Prompt<'_>,
-    ) -> Result<Vec<String>> {
+    ) -> Result<Vec<CopyResult>> {
         if is_file {
-            // dest is a full path incl. file
-            let dest_path = dest
-                .parent()
-                .ok_or_else(|| anyhow::anyhow!("cannot get parent for {:?}", dest))?;
-            if !dest_path.exists() {
-                fs::create_dir_all(&dest_path)?;
-            }
-
-            fs::copy(source, &dest)?;
-            return Ok(vec![dest.display().to_string()]);
+            return Ok(vec![swapper.copy_to(source, dest)?]);
         }
 
         let mut copied = vec![];
         walkdir::WalkDir::new(source)
             .into_iter()
+            .filter_entry(|entry| {
+                let path = entry.path();
+                !DONT_COPY.iter().any(|c| path.ends_with(c))
+            })
             .try_for_each(|entry| {
                 let entry = entry?;
                 let path = entry.path();
+
                 if path.is_file() {
-                    if let Some(parent) = path.parent() {
-                        let dest_parent = dest.join(parent.strip_prefix(source)?);
-                        if !dest_parent.exists() {
-                            // Create the same dir concurrently is ok according to the docs.
-                            fs::create_dir_all(dest_parent)?;
-                        }
-                    }
                     let to = dest.join(path.strip_prefix(source)?);
-                    if to.exists() {
+                    let to_path = to.as_path();
+
+                    //
+                    // trading off some inefficiency for readability here.
+                    // the swapped path can be created only once, but instead it's created
+                    // many times below in `exists`, in prompt, and by each of the `copy`s
+                    // instead of creating a swapped path and *remembering* to pass throughout the workflow,
+                    // we hide its creation.
+                    //
+                    // in addition, each `copy` will check to see if the parent exists, and if not, create it.
+                    // we could create the parent just once here, but again - hiding it inside swapper is better
+                    // than remembering nuances in the prices of checking parent folder more times than needed.
+                    //
+                    if swapper.exists(to_path) {
                         let should_copy = match overwrite {
                             Overwrite::Always => true,
-                            Overwrite::Ask => {
-                                prompt.confirm_overwrite(to.as_path()).unwrap_or(false)
-                            }
+                            Overwrite::Ask => prompt
+                                .confirm_overwrite(swapper.path(to_path).as_path())
+                                .unwrap_or(false),
                             _ => false,
                         };
                         if should_copy {
-                            fs::copy(path, &to)?;
-                            copied.push(to.display().to_string());
+                            let to_swapped = swapper.copy_to(path, to_path)?;
+                            copied.push(to_swapped);
                         }
                     } else {
-                        fs::copy(path, &to)?;
-                        copied.push(to.display().to_string());
+                        let to_swapped = swapper.copy_to(path, to_path)?;
+                        copied.push(to_swapped);
                     }
                 }
 

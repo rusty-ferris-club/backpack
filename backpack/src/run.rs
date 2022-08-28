@@ -1,6 +1,6 @@
-use crate::config::Config;
+use crate::config::{Config, LocalProjectConfig};
 use crate::content::{Coordinate, Deployer};
-use crate::data::Opts;
+use crate::data::{CopyMode, Opts};
 use crate::fetch::Fetcher;
 use crate::git::{GitCmd, GitProvider};
 use crate::shortlink::Shortlink;
@@ -8,6 +8,7 @@ use crate::ui::Prompt;
 use anyhow::{Context, Result};
 use interactive_actions::ActionRunner;
 use requestty_ui::events::KeyEvent;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 pub struct Runner {
@@ -71,27 +72,24 @@ impl Runner {
         }
 
         let config = config;
-        let prompt = &mut events
-            .and_then(|evs| evs.prompt_events.as_ref())
-            .map_or_else(
-                || Prompt::new(&config, opts.show_progress),
-                |evs| Prompt::with_events(&config, evs.clone()),
-            );
+        let prompt = &mut Prompt::build(&config, opts.show_progress, events);
 
-        let should_confirm = shortlink.is_none() || dest.is_none();
-
-        let (shortlink, dest) = prompt.fill_missing(shortlink, dest, opts)?;
+        let (shortlink, dest, should_confirm) = prompt.fill_missing(shortlink, dest, opts)?;
 
         // confirm
         if !opts.always_yes
             && should_confirm
             && !prompt.are_you_sure(&shortlink, dest.as_deref())?
         {
+            // bail out, user won't confirm
             return Ok(());
         }
 
-        prompt.say_resolving();
         let sl = Shortlink::new(&config, self.git.as_ref());
+
+        let mut vars: BTreeMap<String, String> = BTreeMap::new();
+
+        prompt.say_resolving();
         let (location, assets) = sl.resolve(&shortlink, opts.is_git)?;
 
         let cached_path = Config::global_cache_folder()?;
@@ -100,19 +98,25 @@ impl Runner {
         prompt.say_fetching();
         let (source, remove_source) = fetcher.fetch(&location, &assets, opts.no_cache)?;
 
-        prompt.say_unpacking();
-        // rig runner with or without synthetic keyboard events
-        let actions = sl.actions(&shortlink);
-        let action_runner = actions.map(|acts| {
-            events
-                .and_then(|evs| evs.actions_events.clone())
-                .map_or_else(
-                    || ActionRunner::new(acts),
-                    |evs| ActionRunner::with_events(acts, evs),
-                )
-        });
+        // 1st priority: config project actions
+        let config_project_setup = sl.setup_actions(&shortlink);
 
-        let deployer = Deployer::default();
+        // 2nd priority: source project actions
+        let source_project_setup = if LocalProjectConfig::exists(source.as_path()) {
+            let local_project = LocalProjectConfig::load(source.as_path())?;
+            if opts.mode == CopyMode::Copy {
+                local_project.new
+            } else {
+                local_project.apply
+            }
+        } else {
+            None
+        };
+
+        let project_setup = config_project_setup.or(source_project_setup);
+
+        let mut action_runner = build_runner(events);
+        let mut deployer = Deployer::new(&mut action_runner);
 
         let coords = Coordinate {
             source: source.as_path(),
@@ -120,9 +124,18 @@ impl Runner {
             location: &location,
             remove_source,
         };
-        let (files, maybe_actions) = deployer.deploy(coords, action_runner, opts, prompt)?;
+        prompt.say_unpacking();
+        let (files, maybe_actions) =
+            deployer.deploy(coords, project_setup, &mut vars, opts, prompt)?;
 
         prompt.say_done(&files, maybe_actions.as_ref());
         Ok(())
     }
+}
+
+/// build a runner with actions and if there are synthetic events, use them
+pub fn build_runner(events: Option<&RunnerEvents>) -> ActionRunner {
+    events
+        .and_then(|evs| evs.actions_events.clone())
+        .map_or_else(ActionRunner::default, ActionRunner::with_events)
 }

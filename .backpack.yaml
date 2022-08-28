@@ -27,22 +27,20 @@ projects:
   react-prompts:
     shortlink: kriasoft/react-starter-kit
     actions:
-    - name: "Install deps"
-      interaction:
-        kind: confirm
-        prompt: "are you sure?"
-      run: yarn install
-      # break_if_cancel: true
-      ignore_exit: true
-    - name: "generate a model"
+    - name: "name of file"
+      hook: before
       interaction:
         kind: input
         prompt: name of your app
-        out: name
-      run: echo hello {{name}}
+        out: file_name
+    swaps:
+    - key: README.md
+      val_template: "{{file_name}}"
+      path: .*
+    - key: tsconfig.json
+      val: ts-config.json
 
-
-#
+##
 # set up custom vendor prefixes, for convenience and also for custom git
 # URLs such as hosted github or gitlab and others.
 # $ backpack new ghe:jondot/rust-starter

@@ -1,7 +1,8 @@
 use crate::{
-    config::Config,
+    config::{Config, ProjectSetupActions},
     data::{Assets, Location},
     git::GitProvider,
+    templates::Swap,
     vendors::{Vendor, Vendors},
 };
 use anyhow::Result as AnyResult;
@@ -99,6 +100,20 @@ impl<'a> Shortlink<'a> {
         self.config
             .project(shortlink)
             .and_then(|project| project.actions.as_ref())
+    }
+    pub fn swaps(&self, shortlink: &str) -> Option<&'a Vec<Swap>> {
+        self.config
+            .project(shortlink)
+            .and_then(|project| project.swaps.as_ref())
+    }
+
+    pub fn setup_actions(&self, shortlink: &str) -> Option<ProjectSetupActions> {
+        self.config
+            .project(shortlink)
+            .map(|project| ProjectSetupActions {
+                actions: project.actions.clone(),
+                swaps: project.swaps.clone(),
+            })
     }
 }
 

@@ -1,7 +1,9 @@
 ---
 source: backpack/tests/runner_test.rs
-expression: "run_with_no_config(Some(\"https://gist.github.com/jondot/15086f59dab44f30bb10f82ca09f4887\"),\n    None, CopyMode::Apply)"
+expression: "run_with_no_config(Some(\"https://gist.github.com/jondot/15086f59dab44f30bb10f82ca09f4887\"),\n    None, CopyMode::Apply, false,\n    Some(RunnerEvents {\n            prompt_events: Some(vec![KeyCode :: Enter.into(),]),\n            actions_events: None,\n        }))"
 ---
-[
-    "tests-out/jonhoo-trivia.md",
-]
+Ok(
+    [
+        "tests-out/jonhoo-trivia.md",
+    ],
+)

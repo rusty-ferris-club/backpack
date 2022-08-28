@@ -9,10 +9,10 @@ expression: "config.projects_for_selection(&CopyMode::Apply)"
             shortlink: "jondot/three",
             is_git: None,
             description: None,
-            run: None,
             source: Local,
             mode: None,
             actions: None,
+            swaps: None,
         },
     ),
     (
@@ -21,12 +21,12 @@ expression: "config.projects_for_selection(&CopyMode::Apply)"
             shortlink: "jondot/two",
             is_git: None,
             description: None,
-            run: None,
             source: Local,
             mode: Some(
                 Apply,
             ),
             actions: None,
+            swaps: None,
         },
     ),
 ]
