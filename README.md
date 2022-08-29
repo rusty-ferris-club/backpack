@@ -290,7 +290,7 @@ projects:
 
 ## :smiley: Building dedicated template Repos
 
-If you include a `.backpack.yml` file in a repo, `backpack` will use it to understand which actions and swaps to make while copying content.
+If you include a `.backpack-project.yml` file in a repo, `backpack` will use it to understand which actions and swaps to make while copying content.
 
 See [this example](https://github.com/rusty-ferris-club/backpack-e2e-frozen-localproj/blob/main/.backpack-project.yml):
 
