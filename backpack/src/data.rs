@@ -132,8 +132,11 @@ mod tests {
         assert_eq!(loc.git_url(), "git@github.com:user/repo.git");
         assert_eq!(loc.web_url(), "https://github.com/user/repo");
 
-        let loc =
-            Location::from(&Url::parse("https://github.com/user/repo.git").unwrap(), false).unwrap();
+        let loc = Location::from(
+            &Url::parse("https://github.com/user/repo.git").unwrap(),
+            false,
+        )
+        .unwrap();
         assert_eq!(loc.git_url(), "git@github.com:user/repo.git");
         assert_eq!(loc.web_url(), "https://github.com/user/repo");
     }
