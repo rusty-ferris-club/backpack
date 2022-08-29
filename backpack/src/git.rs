@@ -64,18 +64,20 @@ impl GitProvider for GitCmd {
         } else {
             location.web_url()
         };
+        let rremote = remote.as_str();
 
         let process = Command::new("git")
             .arg("ls-remote")
-            .arg(remote)
+            .arg(rremote)
             .output()
-            .context("cannot run git ls-remote")?;
+            .with_context(|| format!("cannot run git ls-remote on '{}'", rremote))?;
         if !process.status.success() {
             log::error!("git ls-remote failed. stderr output:");
             let err = String::from_utf8_lossy(&process.stderr);
             err.split('\n').for_each(|line| log::error!("> {}", line));
             anyhow::bail!(
-                "git ls-remote failed with exit code {}\n---\n{}",
+                "git ls-remote '{}' failed with exit code {}\n---\n{}",
+                rremote,
                 process
                     .status
                     .code()

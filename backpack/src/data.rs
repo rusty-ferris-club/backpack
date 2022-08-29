@@ -52,7 +52,7 @@ impl Location {
         Ok(Self {
             url: url.to_string(),
             domain: url.domain().unwrap_or_default().to_string(),
-            path: path.to_string(),
+            path: path.trim_end_matches(".git").to_string(),
             project: project.to_string(),
             port: url.port(),
             query: url.query().map(str::to_string),
@@ -110,4 +110,31 @@ pub struct Opts {
     pub no_cache: bool,
     pub always_yes: bool,
     pub remote: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_location_urls() {
+        let loc = Location::from(
+            &Url::parse("https://github.com/user/repo.git").unwrap(),
+            true,
+        )
+        .unwrap();
+        assert_eq!(loc.git_url(), "git@github.com:user/repo.git");
+        assert_eq!(loc.web_url(), "https://github.com/user/repo");
+
+        let loc =
+            Location::from(&Url::parse("https://github.com/user/repo").unwrap(), false).unwrap();
+        assert_eq!(loc.git_url(), "git@github.com:user/repo.git");
+        assert_eq!(loc.web_url(), "https://github.com/user/repo");
+
+        let loc =
+            Location::from(&Url::parse("https://github.com/user/repo.git").unwrap(), false).unwrap();
+        assert_eq!(loc.git_url(), "git@github.com:user/repo.git");
+        assert_eq!(loc.web_url(), "https://github.com/user/repo");
+    }
 }
