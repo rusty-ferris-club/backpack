@@ -19,13 +19,6 @@ pub fn command() -> Command<'static> {
                 .help("initialize local configuration")
                 .takes_value(false),
         )
-        .arg(
-            Arg::new("sync")
-                .short('s')
-                .long("sync")
-                .help("synchronize remote config sources")
-                .takes_value(false),
-        )
 }
 
 fn print_path(kind: &str, path: &Path) {
@@ -37,13 +30,7 @@ fn print_path(kind: &str, path: &Path) {
     );
 }
 pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<bool> {
-    if subcommand_matches.is_present("sync") {
-        let (c, _) = Config::load_or_default()?;
-        c.sync(|s| {
-            println!("downloading: {}", s.name);
-        })?;
-        println!("done.");
-    } else if subcommand_matches.is_present("init") {
+    if subcommand_matches.is_present("init") {
         let generated = if subcommand_matches.is_present("local") {
             Config::init_local()?
         } else {

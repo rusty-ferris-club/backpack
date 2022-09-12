@@ -316,24 +316,6 @@ You can set different actions and swaps for when people do `bp new` vs `bp apply
 For file operations such as renaming, moving and so on, you can use vanilla actions (`mv x y`, `rm x`).
 
 
-## :link: Sharing your projects
-You can create a configuration of favorite projects and put it online, to share with your team or save for yourself. Then:
-
-```
-$ bp new -r https://<url to YAML>
-```
-
-```yaml
-# file content:
-projects:
-  rust:
-    shortlink: rusty-ferris-club/rust-starter
-```
-
-
-Running with this remote will show you through the available projects and also offer to save the source in your configuration.
-
-Here's a [an example](https://raw.githubusercontent.com/rusty-ferris-club/backpack-tap/main/main.yaml) from our own [backpack-tap](https://github.com/rusty-ferris-club/backpack-tap) repo.
 ## :label:	 Custom git vendors
 
 Start by generating a **project-local** configuration file:

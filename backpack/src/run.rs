@@ -61,19 +61,10 @@ impl Runner {
         events: Option<&RunnerEvents>,
     ) -> Result<()> {
         // load from direct file, or magically load from 'local' then 'global', then default
-        let (mut config, _) = opts.config_file.as_ref().map_or_else(
+        let (config, _) = opts.config_file.as_ref().map_or_else(
             || Config::load_or_default().context("could not load configuration"),
             |f| Config::from_path(Path::new(f)),
         )?;
-
-        // optionally add remote and sync here if remote exists
-        if let Some(remote) = opts.remote.as_ref() {
-            let num = config.fetch_and_load_remote_projects(remote.as_str())?;
-            let mut prompt = Prompt::new(&config, opts.show_progress);
-            if prompt.confirm_save_remotes(num)? {
-                config.save()?;
-            }
-        }
 
         let config = config;
         let prompt = &mut Prompt::build(&config, opts.show_progress, events);
