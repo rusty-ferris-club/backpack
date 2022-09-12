@@ -114,6 +114,14 @@ impl Config {
         Ok(())
     }
 
+    #[tracing::instrument(name = "config_path", skip_all, err)]
+    pub fn from_path(file: &Path) -> AnyResult<(Self, LoadSource)> {
+        Ok((
+            Self::from_text(&fs::read_to_string(file)?)?,
+            LoadSource::Local,
+        ))
+    }
+
     #[tracing::instrument(name = "config_load", skip_all, err)]
     pub fn load_or_default() -> AnyResult<(Self, LoadSource)> {
         let (local, global) = (Self::local_config_file(), Self::global_config_file()?);
@@ -434,14 +442,14 @@ pub struct Project {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LocalProjectConfig {
+pub struct RepoActionsConfig {
     #[serde(rename = "new")]
     pub new: Option<ProjectSetupActions>,
 
     #[serde(rename = "apply")]
     pub apply: Option<ProjectSetupActions>,
 }
-impl LocalProjectConfig {
+impl RepoActionsConfig {
     const FILE: &'static str = ".backpack-project.yml";
     /// Load a project-local config
     ///

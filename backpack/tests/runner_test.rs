@@ -61,6 +61,7 @@ fn run(
                 no_cache: false,
                 always_yes: true,
                 remote: None,
+                config_file: None,
                 mode,
             },
             &events,
@@ -76,6 +77,7 @@ fn run(
                 no_cache: false,
                 always_yes: true,
                 remote: None,
+                config_file: None,
                 mode,
             },
         )?;
@@ -208,7 +210,7 @@ fn test_run_with_local_project_actions() {
 fn test_run_with_local_project_actions_git_mode() {
     // dont run this in CI, git requires a registered identity
     if env::var("CI").is_err() {
-        run_with_no_config(
+        let res = run_with_no_config(
             Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
             None,
             CopyMode::Copy,
@@ -226,7 +228,8 @@ fn test_run_with_local_project_actions_git_mode() {
             }),
         )
         .unwrap();
-        assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project/test.txt").unwrap());
+        assert_yaml_snapshot!(res);
+        assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project1/test.txt").unwrap());
     }
 }
 

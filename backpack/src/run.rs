@@ -1,4 +1,4 @@
-use crate::config::{Config, LocalProjectConfig};
+use crate::config::{Config, RepoActionsConfig};
 use crate::content::{Coordinate, Deployer};
 use crate::data::{CopyMode, Opts};
 use crate::fetch::Fetcher;
@@ -60,7 +60,11 @@ impl Runner {
         opts: &Opts,
         events: Option<&RunnerEvents>,
     ) -> Result<()> {
-        let (mut config, _) = Config::load_or_default().context("could not load configuration")?;
+        // load from direct file, or magically load from 'local' then 'global', then default
+        let (mut config, _) = opts.config_file.as_ref().map_or_else(
+            || Config::load_or_default().context("could not load configuration"),
+            |f| Config::from_path(Path::new(f)),
+        )?;
 
         // optionally add remote and sync here if remote exists
         if let Some(remote) = opts.remote.as_ref() {
@@ -102,8 +106,8 @@ impl Runner {
         let config_project_setup = sl.setup_actions(&shortlink);
 
         // 2nd priority: source project actions
-        let source_project_setup = if LocalProjectConfig::exists(source.as_path()) {
-            let local_project = LocalProjectConfig::load(source.as_path())?;
+        let source_project_setup = if RepoActionsConfig::exists(source.as_path()) {
+            let local_project = RepoActionsConfig::load(source.as_path())?;
             if opts.mode == CopyMode::Copy {
                 local_project.new
             } else {

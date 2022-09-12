@@ -110,6 +110,7 @@ pub struct Opts {
     pub no_cache: bool,
     pub always_yes: bool,
     pub remote: Option<String>,
+    pub config_file: Option<String>,
 }
 
 #[cfg(test)]

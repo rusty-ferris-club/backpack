@@ -52,6 +52,9 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
     let remote = subcommand_matches
         .get_one::<String>("remote")
         .map(String::to_string);
+    let config_file = subcommand_matches
+        .get_one::<String>("config")
+        .map(String::to_string);
 
     let r = Runner::default();
     r.run(
@@ -64,6 +67,7 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
             no_cache: subcommand_matches.is_present("no-cache"),
             always_yes: false,
             remote,
+            config_file,
             mode: CopyMode::Apply,
         },
     )?;

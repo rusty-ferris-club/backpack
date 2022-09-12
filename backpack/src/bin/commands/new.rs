@@ -37,6 +37,13 @@ pub fn command() -> Command<'static> {
                 .help("fetch project definitions from a remote config")
                 .takes_value(true),
         )
+        .arg(
+            Arg::new("config")
+                .short('c')
+                .long("config")
+                .help("use a specified configuration file")
+                .takes_value(true),
+        )
         .arg(Arg::new("shortlink"))
         .arg(Arg::new("name"))
 }
@@ -51,6 +58,9 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
     let remote = subcommand_matches
         .get_one::<String>("remote")
         .map(String::to_string);
+    let config_file = subcommand_matches
+        .get_one::<String>("config")
+        .map(String::to_string);
 
     let r = Runner::default();
     r.run(
@@ -63,6 +73,7 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
             no_cache: subcommand_matches.is_present("no-cache"),
             always_yes: false,
             remote,
+            config_file,
             mode: CopyMode::Copy,
         },
     )?;
