@@ -173,22 +173,6 @@ impl<'a> Prompt<'a> {
         }
     }
 
-    /// .
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if .
-    pub fn confirm_save_remotes(&mut self, num_remotes: usize) -> AnyResult<bool> {
-        let question = Question::confirm("question")
-            .message(format!(
-                "Found {} remote(s). Would you like to save to your configuration?",
-                num_remotes,
-            ))
-            .build();
-
-        Ok(self.prompt_one(question)?.as_bool().unwrap_or(false))
-    }
-
     /// Returns the input shortlink of this [`Prompt`].
     ///
     /// # Errors

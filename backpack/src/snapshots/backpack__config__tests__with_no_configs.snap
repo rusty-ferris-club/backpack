@@ -1,7 +1,11 @@
 ---
 source: backpack/src/config.rs
-expression: res
+expression: config
 ---
-Ok(
-    [],
+(
+    Config {
+        projects: None,
+        vendors: None,
+    },
+    Default,
 )

@@ -109,7 +109,6 @@ pub struct Opts {
     pub is_git: bool,
     pub no_cache: bool,
     pub always_yes: bool,
-    pub remote: Option<String>,
     pub config_file: Option<String>,
 }
 

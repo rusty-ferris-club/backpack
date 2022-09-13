@@ -1,28 +1,23 @@
 ---
 source: backpack/src/config.rs
-expression: res
+expression: config
 ---
-Ok(
-    [
-        (
-            "community.yaml",
-            Config {
-                project_sources: None,
-                projects: Some(
-                    {
-                        "rust": Project {
-                            shortlink: "rusty-ferris-club",
-                            is_git: None,
-                            description: None,
-                            source: External,
-                            mode: None,
-                            actions: None,
-                            swaps: None,
-                        },
-                    },
-                ),
-                vendors: None,
+(
+    Config {
+        projects: Some(
+            {
+                "rust": Project {
+                    shortlink: "correct/local",
+                    is_git: None,
+                    description: None,
+                    source: Local,
+                    mode: None,
+                    actions: None,
+                    swaps: None,
+                },
             },
         ),
-    ],
+        vendors: None,
+    },
+    Local,
 )
