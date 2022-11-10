@@ -74,7 +74,11 @@ impl Runner {
         // confirm
         if !opts.always_yes
             && should_confirm
-            && !prompt.are_you_sure(&shortlink, dest.as_deref())?
+            && !prompt.are_you_sure(&format!(
+                "Generate from '{}' into '{}'?",
+                shortlink,
+                dest.as_deref().unwrap_or("a default folder")
+            ))?
         {
             // bail out, user won't confirm
             return Ok(());

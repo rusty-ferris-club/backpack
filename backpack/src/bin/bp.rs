@@ -18,6 +18,7 @@ fn main() {
         .subcommand(commands::new::command())
         .subcommand(commands::apply::command())
         .subcommand(commands::cache::command())
+        .subcommand(commands::add::command())
         .subcommand(commands::config::command());
 
     let matches = app.clone().get_matches();
@@ -27,6 +28,7 @@ fn main() {
             ("new", subcommand_matches) => commands::new::run(&matches, subcommand_matches),
             ("apply", subcommand_matches) => commands::apply::run(&matches, subcommand_matches),
             ("cache", subcommand_matches) => commands::cache::run(&matches, subcommand_matches),
+            ("add", subcommand_matches) => commands::add::run(&matches, subcommand_matches),
             ("config", subcommand_matches) => commands::config::run(&matches, subcommand_matches),
             _ => unreachable!(),
         },

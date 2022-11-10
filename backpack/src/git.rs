@@ -1,6 +1,6 @@
 use crate::data::Location;
-use anyhow::{Context, Result};
-use std::process::Command;
+use anyhow::{bail, Context, Result};
+use std::{any, process::Command};
 use tracing;
 
 pub trait GitProvider {
@@ -24,6 +24,13 @@ pub trait GitProvider {
     ///
     /// This function will return an error if underlying remote resolving implementation failed.
     fn get_ref_or_default(&self, location: &Location) -> Result<RemoteInfo>;
+
+    /// Get the current repo's main remote url
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if underlying remote resolving implementation failed.
+    fn get_local_url(&self) -> Result<String>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -132,5 +139,32 @@ impl GitProvider for GitCmd {
             );
         }
         Ok(())
+    }
+
+    fn get_local_url(&self) -> anyhow::Result<String> {
+        let process = Command::new("git")
+            .arg("remote")
+            .arg("get-url")
+            .arg("origin")
+            .output()
+            .with_context(|| "cannot run git remote on local repo".to_string())?;
+
+        if !process.status.success() {
+            anyhow::bail!(
+                "cannot find local url: {}",
+                String::from_utf8_lossy(&process.stderr[..])
+            );
+        }
+
+        let url = String::from_utf8_lossy(&process.stdout[..]);
+        let lines = url.lines().collect::<Vec<_>>();
+        if lines.len() != 1 {
+            // too many urls, cannot decide
+            bail!("repo has more than one remote URL")
+        }
+        match lines.first() {
+            Some(ln) => Ok((*ln).to_string()),
+            _ => bail!("no repo remote URL found"),
+        }
     }
 }

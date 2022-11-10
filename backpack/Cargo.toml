@@ -50,6 +50,7 @@ interactive-actions = "1"
 tera = "^1.17.0"
 tera-text-filters = "^1.0.0"
 content_inspector = "0.2.4"
+edit = "*"
 
 [dev-dependencies]
 insta = { version = "1.17.1", features = ["backtrace", "redactions"] }

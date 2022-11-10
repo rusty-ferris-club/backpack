@@ -63,7 +63,15 @@ impl<'a> Prompt<'a> {
                 } else {
                     self.input_shortlink()?
                 };
-                Ok((shortlink, d.map(ToString::to_string), true))
+                if let Some(d) = d {
+                    Ok((shortlink, Some(d.to_string()), true))
+                } else {
+                    Ok((
+                        shortlink,
+                        self.input_dest(opts.mode == CopyMode::Copy)?,
+                        true,
+                    ))
+                }
             }
             (Some(s), None) => Ok((
                 s.to_string(),
@@ -123,6 +131,50 @@ impl<'a> Prompt<'a> {
             _ => Ok(None),
         }
     }
+
+    /// Shows the list of projects
+    pub fn show_projects(&self, mode: &CopyMode) {
+        println!("Current projects:");
+        match self.config.projects_for_selection(mode) {
+            projects if !projects.is_empty() => {
+                for (name, project) in projects {
+                    println!(
+                        "- {} ({})",
+                        style(name).yellow(),
+                        style(&project.shortlink).dim()
+                    );
+                }
+            }
+            _ => {
+                println!("You have no projects yet.");
+            }
+        };
+    }
+
+    /// Returns the input shortlink of this [`Prompt`].
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if interaction is killed
+    pub fn ask_for_project_name(&mut self, repo: &str) -> AnyResult<String> {
+        let question = Question::input("question")
+            .validate(|v, _| {
+                if v.is_empty() {
+                    Err("cannot be empty".into())
+                } else {
+                    Ok(())
+                }
+            })
+            .message(format!("A name for '{}'?", repo))
+            .build();
+        let name = self
+            .prompt_one(question)?
+            .as_string()
+            .ok_or_else(|| anyhow::anyhow!("cannot parse input"))?
+            .to_string();
+        Ok(name)
+    }
+
     /// Returns the input shortlink of this [`Prompt`].
     ///
     /// # Errors
@@ -178,13 +230,9 @@ impl<'a> Prompt<'a> {
     /// # Errors
     ///
     /// This function will return an error if interaction is killed
-    pub fn are_you_sure(&mut self, shortlink: &str, dest: Option<&str>) -> AnyResult<bool> {
+    pub fn are_you_sure(&mut self, text: &str) -> AnyResult<bool> {
         let question = Question::confirm("question")
-            .message(format!(
-                "Generate from '{}' into '{}'?",
-                shortlink,
-                dest.unwrap_or("a default folder"),
-            ))
+            .message(text)
             .default(true)
             .build();
 
@@ -271,6 +319,22 @@ impl<'a> Prompt<'a> {
                 style(total_actions).yellow()
             );
         }
+    }
+
+    pub fn say(&self, text: &str) {
+        println!("{}", text);
+    }
+
+    /// Ask if user wants to edit a file and open editor
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if IO failed
+    pub fn suggest_edit(&mut self, text: &str, path: &Path) -> AnyResult<()> {
+        if self.are_you_sure(text)? {
+            edit::edit_file(path)?;
+        }
+        Ok(())
     }
 
     fn prompt_one<I: Into<Question<'a>>>(&mut self, question: I) -> AnyResult<Answer> {

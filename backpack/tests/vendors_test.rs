@@ -22,6 +22,9 @@ impl GitProvider for TestGitProvider {
     fn shallow_clone(&self, _location: &Location, _out: &str) -> anyhow::Result<()> {
         Ok(())
     }
+    fn get_local_url(&self) -> anyhow::Result<String> {
+        Ok("".to_string())
+    }
 }
 
 #[test]
