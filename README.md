@@ -33,22 +33,23 @@
 
 ```
 $ bp --help
-backpack 1.0.0
+backpack 1.5.0
 Create projects from existing repos
 
 USAGE:
-    backpack <SUBCOMMAND>
+    bp <SUBCOMMAND>
 
 OPTIONS:
     -h, --help       Print help information
     -V, --version    Print version information
 
 SUBCOMMANDS:
-    apply     apply remote files into a folder [projects: a]
+    add       Add a repo as a project
+    apply     apply remote files into a folder [aliases: a]
     cache     cache handling
     config    create custom configuration
     help      Print this message or the help of the given subcommand(s)
-    new       initialize a new project [projects: n]
+    new       initialize a new project [aliases: n]
 ```
 
 To generate a new project, you can use any repo:
@@ -69,6 +70,15 @@ Otherwise, grab a release from [releases](https://github.com/rusty-ferris-club/b
 
 
 ## :hammer: Create starters from ordinary repos
+
+Go to your ordinary repo and follow the `add` wizard:
+
+```
+$ cd your-repo
+$ bp add
+```
+
+## :hammer: Create starters manually
 
 Create a `backpack.yaml`:
 
