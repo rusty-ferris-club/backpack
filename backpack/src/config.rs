@@ -272,7 +272,7 @@ impl Default for ProjectSourceKind {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Project {
     #[serde(rename = "shortlink")]
     pub shortlink: String,
@@ -295,6 +295,14 @@ pub struct Project {
 
     #[serde(rename = "swaps")]
     pub swaps: Option<Vec<Swap>>,
+}
+impl Project {
+    pub fn from_link(ln: &str) -> Self {
+        Self {
+            shortlink: ln.to_string(),
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

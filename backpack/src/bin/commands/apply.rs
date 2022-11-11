@@ -31,6 +31,13 @@ pub fn command() -> Command<'static> {
                 .help("fetch resources without using the cache")
                 .takes_value(false),
         )
+        .arg(
+            Arg::new("config")
+                .short('c')
+                .long("config")
+                .help("use a specified configuration file")
+                .takes_value(true),
+        )
         .arg(Arg::new("shortlink"))
         .arg(Arg::new("dest"))
 }
