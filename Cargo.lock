@@ -2698,6 +2698,20 @@ dependencies = [
  "fs_extra",
  "glob",
  "xshell",
+ "xtaskops",
+]
+
+[[package]]
+name = "xtaskops"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03ed7f04c3669b6d39c662471a2be538809a8c0e2dfd82462fb952c27ee7c468"
+dependencies = [
+ "anyhow",
+ "dialoguer",
+ "duct",
+ "fs_extra",
+ "glob",
 ]
 
 [[package]]

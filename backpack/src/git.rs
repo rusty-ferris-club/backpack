@@ -1,6 +1,6 @@
 use crate::data::Location;
 use anyhow::{bail, Context, Result};
-use std::{any, process::Command};
+use std::process::Command;
 use tracing;
 
 pub trait GitProvider {

@@ -125,7 +125,7 @@ impl Swapper {
             .parent()
             .ok_or_else(|| anyhow::anyhow!("cannot get parent for {:?}", swapped))?;
         if !parent.exists() {
-            fs::create_dir_all(&parent)?;
+            fs::create_dir_all(parent)?;
         };
 
         let content_swaps = self
