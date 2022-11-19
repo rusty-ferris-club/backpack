@@ -6,17 +6,17 @@ use std::fs;
 
 pub fn command() -> Command<'static> {
     Command::new("cache")
-        .about("cache handling")
+        .about("Cache handling")
         .arg(
             Arg::new("rm")
                 .long("rm")
-                .help("remove the cache")
+                .help("Remove the cache")
                 .takes_value(false),
         )
         .arg(
             Arg::new("path")
                 .long("path")
-                .help("show where the cache is stored")
+                .help("Show where the cache is stored")
                 .takes_value(false),
         )
 }

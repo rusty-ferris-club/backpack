@@ -4,6 +4,6 @@ expression: "run_with_no_config(Some(\"rusty-ferris-club/backpack-e2e-frozen/-/.
 ---
 Ok(
     [
-        "tests-out/out/build.yml",
+        "tests-out/out/build.yml/build.yml",
     ],
 )

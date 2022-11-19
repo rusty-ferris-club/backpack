@@ -60,6 +60,15 @@ impl Runner {
         opts: &Opts,
         events: Option<&RunnerEvents>,
     ) -> Result<()> {
+        // if apply and no dest, it's always current folder
+        let dest = dest.or_else(|| {
+            if opts.mode == CopyMode::Apply {
+                Some(".")
+            } else {
+                None
+            }
+        });
+
         // load from direct file, or magically load from 'local' then 'global', then default
         let (config, _) = opts.config_file.as_ref().map_or_else(
             || Config::load_or_default().context("could not load configuration"),
@@ -67,22 +76,10 @@ impl Runner {
         )?;
 
         let config = config;
+
         let prompt = &mut Prompt::build(&config, opts.show_progress, events);
 
         let (shortlink, dest, should_confirm) = prompt.fill_missing(shortlink, dest, opts)?;
-
-        // confirm
-        if !opts.always_yes
-            && should_confirm
-            && !prompt.are_you_sure(&format!(
-                "Generate from '{}' into '{}'?",
-                shortlink,
-                dest.as_deref().unwrap_or("a default folder")
-            ))?
-        {
-            // bail out, user won't confirm
-            return Ok(());
-        }
 
         let sl = Shortlink::new(&config, self.git.as_ref());
 
@@ -97,16 +94,16 @@ impl Runner {
         prompt.say_fetching();
         let (source, remove_source) = fetcher.fetch(&location, &assets, opts.no_cache)?;
 
-        // 1st priority: config project actions
+        // 1st priority: my own config project actions
         let config_project_setup = sl.setup_actions(&shortlink);
 
-        // 2nd priority: source project actions
+        // 2nd priority: remote source project actions
         let source_project_setup = if RepoActionsConfig::exists(source.as_path()) {
             let local_project = RepoActionsConfig::load(source.as_path())?;
-            if opts.mode == CopyMode::Copy {
-                local_project.new
-            } else {
+            if opts.mode == CopyMode::Apply {
                 local_project.apply
+            } else {
+                local_project.new
             }
         } else {
             None
@@ -117,12 +114,26 @@ impl Runner {
         let mut action_runner = build_runner(events);
         let mut deployer = Deployer::new(&mut action_runner);
 
-        let coords = Coordinate {
-            source: source.as_path(),
-            dest: dest.as_ref().map(Path::new),
-            location: &location,
+        let coords = Coordinate::new(
+            source.as_path(),
+            dest.as_deref().map(Path::new),
+            &location,
             remove_source,
-        };
+        )?;
+
+        // confirm
+        if !opts.always_yes
+            && should_confirm
+            && !prompt.are_you_sure(&format!(
+                "Generate from '{}' into '{}'?",
+                shortlink,
+                coords.to.to_string_lossy(),
+            ))?
+        {
+            // bail out, user won't confirm
+            return Ok(());
+        }
+
         prompt.say_unpacking();
         let (files, maybe_actions) =
             deployer.deploy(coords, project_setup, &mut vars, opts, prompt)?;

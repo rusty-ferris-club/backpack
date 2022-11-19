@@ -66,18 +66,10 @@ impl<'a> Prompt<'a> {
                 if let Some(d) = d {
                     Ok((shortlink, Some(d.to_string()), true))
                 } else {
-                    Ok((
-                        shortlink,
-                        self.input_dest(opts.mode == CopyMode::Copy)?,
-                        true,
-                    ))
+                    Ok((shortlink, self.input_dest()?, true))
                 }
             }
-            (Some(s), None) => Ok((
-                s.to_string(),
-                self.input_dest(opts.mode == CopyMode::Copy)?,
-                true,
-            )),
+            (Some(s), None) => Ok((s.to_string(), self.input_dest()?, true)),
         }
     }
 
@@ -92,7 +84,7 @@ impl<'a> Prompt<'a> {
         // impl pick dest, where we do a "my-project" and 1,2,3,4 if exists.
         // add a final confirmation with the data
         // move all UI stuff into prompt
-        match self.config.projects_for_selection(mode) {
+        match self.config.projects_for_selection(Some(mode.clone())) {
             projects if !projects.is_empty() => {
                 let options = projects
                     .iter()
@@ -100,13 +92,11 @@ impl<'a> Prompt<'a> {
                         format!(
                             "{} ({})",
                             k,
-                            p.mode
-                                .as_ref()
-                                .map_or("apply+new", |m| if CopyMode::Apply.eq(m) {
-                                    "apply"
-                                } else {
-                                    "new"
-                                })
+                            if CopyMode::Apply == p.mode {
+                                "apply"
+                            } else {
+                                "new"
+                            }
                         )
                     })
                     .collect::<Vec<_>>();
@@ -133,7 +123,7 @@ impl<'a> Prompt<'a> {
     }
 
     /// Shows the list of projects
-    pub fn show_projects(&self, mode: &CopyMode) {
+    pub fn show_projects(&self, mode: Option<CopyMode>) {
         println!("Current projects:");
         match self.config.projects_for_selection(mode) {
             projects if !projects.is_empty() => {
@@ -204,13 +194,8 @@ impl<'a> Prompt<'a> {
     /// # Errors
     ///
     /// This function will return an error if interaction is killed
-    pub fn input_dest(&mut self, guess: bool) -> AnyResult<Option<String>> {
-        let default_dest = guess_dest()?;
-
-        let mut b = Question::input("question").message("Destination");
-        if guess {
-            b = b.default(default_dest);
-        }
+    pub fn input_dest(&mut self) -> AnyResult<Option<String>> {
+        let b = Question::input("question").message("Destination");
         let question = b.build();
 
         let dest = self

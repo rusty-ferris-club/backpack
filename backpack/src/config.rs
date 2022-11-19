@@ -221,18 +221,13 @@ impl Config {
         Ok(())
     }
 
-    pub fn projects_for_selection(&self, mode: &CopyMode) -> Vec<(&String, &Project)> {
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn projects_for_selection(&self, mode: Option<CopyMode>) -> Vec<(&String, &Project)> {
         self.projects
             .as_ref()
             .map(|ps| {
                 ps.iter()
-                    .filter(|t| {
-                        CopyMode::All.eq(mode)
-                            || t.1
-                                .mode
-                                .as_ref()
-                                .map_or(true, |m| CopyMode::All.eq(m) || m.eq(mode))
-                    })
+                    .filter(|t| mode.as_ref().map_or(true, |m| t.1.mode.eq(m)))
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default()
@@ -288,7 +283,8 @@ pub struct Project {
     pub source: ProjectSourceKind,
 
     #[serde(rename = "mode")]
-    pub mode: Option<CopyMode>,
+    #[serde(default)]
+    pub mode: CopyMode,
 
     #[serde(rename = "actions")]
     pub actions: Option<Vec<Action>>,
@@ -378,9 +374,8 @@ projects:
 "###,
         )
         .unwrap();
-        assert_debug_snapshot!(config.projects_for_selection(&CopyMode::Copy));
-        assert_debug_snapshot!(config.projects_for_selection(&CopyMode::Apply));
-        assert_debug_snapshot!(config.projects_for_selection(&CopyMode::All));
+        assert_debug_snapshot!(config.projects_for_selection(Some(CopyMode::Copy)));
+        assert_debug_snapshot!(config.projects_for_selection(Some(CopyMode::Apply)));
     }
 
     #[test]

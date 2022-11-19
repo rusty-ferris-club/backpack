@@ -1,5 +1,5 @@
 use crate::config::ProjectSetupActions;
-use crate::data::{CopyMode, Location, Opts, Overwrite};
+use crate::data::{Location, Opts, Overwrite};
 use crate::templates::{CopyResult, Swapper};
 use crate::ui::Prompt;
 use anyhow::Result;
@@ -8,16 +8,71 @@ use interactive_actions::{
     data::{Action, ActionHook},
     ActionRunner,
 };
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use tracing::warn;
 use walkdir;
 
-pub struct Coordinate<'a> {
-    pub source: &'a Path,
-    pub dest: Option<&'a Path>,
-    pub location: &'a Location,
-    pub remove_source: bool,
+#[derive(Debug, Serialize)]
+pub struct Coordinate {
+    pub from: PathBuf,
+    pub to: PathBuf,
+    pub is_file: bool,
+    pub remove_from: bool,
+}
+
+impl Coordinate {
+    /// Calculate copy coordinates from source, dest, and location to paths on disk: from, to
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if I/O fails
+    pub fn new(
+        source: &Path,
+        dest: Option<&Path>,
+        location: &Location,
+        remove: bool,
+    ) -> Result<Self> {
+        // source | source + location.subfolder
+        let from = location
+            .subfolder
+            .as_ref()
+            .map_or_else(|| source.into(), |subfolder| source.join(subfolder));
+
+        // is this "deploying" a single file or a folder?
+        let is_file = from.is_file();
+
+        let location_folder = location.subfolder.clone().map(PathBuf::from);
+        let final_dest = if let Some(dest) = dest {
+            if is_file {
+                let fname = from
+                    .file_name()
+                    .ok_or_else(|| anyhow::anyhow!("cannot get file name for {:?}", from))?;
+
+                dest.join(fname)
+            } else {
+                dest.to_path_buf()
+            }
+        } else if is_file {
+            let fname = from
+                .file_name()
+                .ok_or_else(|| anyhow::anyhow!("cannot get file name for {:?}", from))?;
+
+            // location was: github.com/foo/baz/-/[tools/ci/bar.yaml], source: /tmp/foo/baz/tools/ci/bar.yaml, dest: tools/ci/bar.yaml
+            //                                     `-- subfolder
+            location_folder.unwrap_or_else(|| fname.into())
+        } else {
+            location_folder.unwrap_or_else(|| ".".into())
+        };
+
+        Ok(Self {
+            from,
+            to: final_dest,
+            is_file,
+            remove_from: remove,
+        })
+    }
 }
 
 pub struct Deployer<'a> {
@@ -34,40 +89,17 @@ impl<'a> Deployer<'a> {
     #[tracing::instrument(skip_all, err)]
     pub fn deploy(
         &mut self,
-        coord: Coordinate<'_>,
+        coord: Coordinate,
         project_setup: Option<ProjectSetupActions>,
         vars: &mut BTreeMap<String, String>,
         opts: &Opts,
         prompt: &mut Prompt<'_>,
     ) -> Result<(Vec<CopyResult>, Option<Vec<ActionResult>>)> {
         // xxx: either way canonicalize paths.
-        let final_source = coord
-            .source
-            .join(coord.location.subfolder.clone().unwrap_or_default());
-        let dest = coord.dest.map(std::path::Path::to_path_buf);
-        let location_path = coord.location.subfolder.clone().map(PathBuf::from);
-
-        // is this "deploying" a single file or a folder?
-        let is_file = final_source.is_file();
-
-        let final_dest = if is_file {
-            // final dest = dest | location+fname | fname
-            let fname = final_source
-                .file_name()
-                .ok_or_else(|| anyhow::anyhow!("cannot get file name for {:?}", final_source))?;
-            dest.or_else(|| {
-                location_path.and_then(|loc| loc.parent().map(|p| p.to_path_buf().join(fname)))
-            })
-            .unwrap_or_else(|| PathBuf::from(fname))
+        let actions_dest = if coord.is_file {
+            coord.to.parent().unwrap_or_else(|| Path::new("."))
         } else {
-            dest.or(location_path)
-                .unwrap_or_else(|| PathBuf::from(".".to_string()))
-        };
-
-        let actions_dest = if is_file {
-            final_dest.parent().unwrap_or_else(|| Path::new("."))
-        } else {
-            final_dest.as_path()
+            coord.to.as_path()
         };
 
         let (actions, swaps) = project_setup
@@ -85,41 +117,25 @@ impl<'a> Deployer<'a> {
         }
 
         let swapper = Swapper::with_vars(swaps, vars)?;
-        let files = match opts.mode {
-            CopyMode::Copy => {
-                if final_dest.exists() {
-                    anyhow::bail!("path already exists: {}", final_dest.display());
-                }
-                self.copy(
-                    &swapper,
-                    &final_source,
-                    &final_dest,
-                    is_file,
-                    Overwrite::Always,
-                    prompt,
-                )?
-            }
-            CopyMode::Apply => self.copy(
-                &swapper,
-                &final_source,
-                &final_dest,
-                is_file,
-                if opts.overwrite {
-                    Overwrite::Always
-                } else {
-                    Overwrite::Ask
-                },
-                prompt,
-            )?,
-            CopyMode::All => {
-                vec![]
-            }
-        };
-        if coord.remove_source {
+
+        let files = self.copy(
+            &swapper,
+            &coord.from,
+            &coord.to,
+            coord.is_file,
+            if opts.overwrite {
+                Overwrite::Always
+            } else {
+                Overwrite::Ask
+            },
+            prompt,
+        )?;
+
+        if coord.remove_from {
             // xxx don't remove for now
             warn!(
                 "remove requested, but not removing '{}'",
-                coord.source.display()
+                coord.from.display()
             );
         }
 
@@ -199,5 +215,76 @@ impl<'a> Deployer<'a> {
                 anyhow::Ok(())
             })?;
         Ok(copied)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use insta::assert_yaml_snapshot;
+    use url::Url;
+
+    #[test]
+    fn test_coord_new() {
+        let norm_paths =
+            || insta::dynamic_redaction(|value, _path| value.as_str().unwrap().replace('\\', "/"));
+
+        assert_yaml_snapshot!(Coordinate::new(
+            Path::new("here"),
+            None,
+            &Location::from(&Url::parse("https://github.com/foo/bar").unwrap(), true).unwrap(),
+            false
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
+
+        assert_yaml_snapshot!(Coordinate::new(
+            Path::new("here"),
+            None,
+            &Location::from(
+                &Url::parse("https://github.com/foo/bar/-/subfolder/qux").unwrap(),
+                true
+            )
+            .unwrap(),
+            false
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
+
+        assert_yaml_snapshot!(Coordinate::new(
+            Path::new("here"),
+            Some(Path::new("there")),
+            &Location::from(&Url::parse("https://github.com/foo/bar").unwrap(), true).unwrap(),
+            false
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
+
+        assert_yaml_snapshot!(Coordinate::new(
+            Path::new("here"),
+            Some(Path::new("there")),
+            &Location::from(
+                &Url::parse("https://github.com/foo/bar/-/subfolder/qux").unwrap(),
+                true
+            )
+            .unwrap(),
+            false
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
+
+        assert_yaml_snapshot!(Coordinate::new(
+            Path::new("tests"),
+            None,
+            &Location::from(
+                &Url::parse("https://github.com/foo/bar/-/fixtures/local-project.yaml").unwrap(),
+                true
+            )
+            .unwrap(),
+            false
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
+
+        assert_yaml_snapshot!(Coordinate::new(
+            Path::new("tests"),
+            Some(Path::new("there")),
+            &Location::from(
+                &Url::parse("https://github.com/foo/bar/-/fixtures/local-project.yaml").unwrap(),
+                true
+            )
+            .unwrap(),
+            false
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
     }
 }

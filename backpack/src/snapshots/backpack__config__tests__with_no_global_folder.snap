@@ -11,7 +11,7 @@ expression: config
                     is_git: None,
                     description: None,
                     source: Local,
-                    mode: None,
+                    mode: Copy,
                     actions: None,
                     swaps: None,
                 },

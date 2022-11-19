@@ -154,9 +154,7 @@ fn test_run_source_single_file() {
         CopyMode::Apply,
         false,
         Some(RunnerEvents {
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(),     // no dest
-            ]),
+            prompt_events: Some(vec![]),
             actions_events: None,
         }),
     ));
@@ -171,9 +169,7 @@ fn test_run_source_gist() {
         CopyMode::Apply,
         false,
         Some(RunnerEvents {
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(),     // no dest
-            ]),
+            prompt_events: Some(vec![]),
             actions_events: None,
         }),
     ));
@@ -184,13 +180,11 @@ fn test_run_source_gist() {
 fn test_run_with_local_project_actions() {
     assert_yaml_snapshot!(run_with_no_config(
         Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
-        None,
+        Some("my-project1"),
         CopyMode::Copy,
         false,
         Some(RunnerEvents {
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(), // default name
-            ]),
+            prompt_events: Some(vec![]),
             actions_events: Some(vec![
                 KeyCode::Char('f').into(), // name: 'foo'
                 KeyCode::Char('o').into(), //
@@ -210,13 +204,11 @@ fn test_run_with_local_project_actions_git_mode() {
     if env::var("CI").is_err() {
         let res = run_with_no_config(
             Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
-            None,
+            Some("my-project1"),
             CopyMode::Copy,
             true,
             Some(RunnerEvents {
-                prompt_events: Some(vec![
-                    KeyCode::Enter.into(), // default name
-                ]),
+                prompt_events: Some(vec![]),
                 actions_events: Some(vec![
                     KeyCode::Char('f').into(), // name: 'foo'
                     KeyCode::Char('o').into(), //
@@ -264,9 +256,7 @@ projects:
                 KeyCode::Char('v').into(), //
                 KeyCode::Enter.into(),     //
             ]),
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(),     // no dest
-            ]),
+            prompt_events: Some(vec![]),
         }),
     ));
 }
@@ -301,9 +291,7 @@ projects:
                 KeyCode::Char('n').into(), // yes
                 KeyCode::Enter.into(),     //
             ]),
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(),     // no dest
-            ]),
+            prompt_events: Some(vec![]),
         }),
     ));
 }
@@ -342,9 +330,7 @@ projects:
                 KeyCode::Char('v').into(), //
                 KeyCode::Enter.into(),     //
             ]),
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(),     // no dest
-            ]),
+            prompt_events: Some(vec![]),
         }),
     ));
 }
@@ -382,9 +368,7 @@ projects:
                 KeyCode::Char('v').into(), //
                 KeyCode::Enter.into(),     //
             ]),
-            prompt_events: Some(vec![
-                KeyCode::Enter.into(),     // no dest
-            ]),
+            prompt_events: Some(vec![]),
         }),
     ));
 }

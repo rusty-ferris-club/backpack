@@ -37,7 +37,7 @@ projects:
 Now you can run `bp` without any argument, and it will offer a selection:
 
 ```
-$ bp new
+$ bp
 ? Project (esc for shortlink) ›
 ❯ vite-starter (apply+new)
 ```
@@ -45,7 +45,7 @@ $ bp new
 And you'll see `yarn` being run automatically:
 
 ```
-$ bp new
+$ bp
 ? Project (esc for shortlink) ›
 ❯ vite-starter (apply+new)
 ✔ Destination · my-project3

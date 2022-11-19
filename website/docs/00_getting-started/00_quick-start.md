@@ -27,7 +27,7 @@ Otherwise, grab a release from [releases](https://github.com/rusty-ferris-club/b
 Let's start with the `Vital` [vite.js](https://vitejs.dev/) template:
 
 ```bash
-$ bp new jvidalv/vital
+$ bp jvidalv/vital
 ✔ Destination · my-project2
 ✔ Generate from 'jvidalv/vital' into 'my-project2'? · Yes
 🔮 Resolving...
@@ -55,7 +55,7 @@ Have an existing project and just want the cool `.husky` configuration from `Vit
 
 ```bash
 $ cd your-existing-project
-$ bp apply jvidalv/vital/-/.husky
+$ bp -f jvidalv/vital/-/.husky
 ✔ Destination ·
 ✔ Generate from 'jvidalv/vital/-/.husky' into 'a default folder'? · Yes
 🔮 Resolving...

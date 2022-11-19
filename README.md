@@ -33,29 +33,36 @@
 
 ```
 $ bp --help
-backpack 1.5.0
-Create projects from existing repos
+backpack 2.0.0
+Set up projects and download files from existing repos
 
 USAGE:
-    bp <SUBCOMMAND>
+    bp [OPTIONS] [ARGS] [SUBCOMMAND]
+
+ARGS:
+    <shortlink>    A full or short link to a repo (e.g. org/user)
+    <dest>         Target folder
 
 OPTIONS:
-    -h, --help       Print help information
-    -V, --version    Print version information
+    -c, --config <config>    Use a specified configuration file
+    -f, --fetch              Fetch and apply into the current folder
+    -g, --git                Clone with git
+    -h, --help               Print help information
+    -n, --no-cache           Fetch resources without using the cache
+    -V, --version            Print version information
+    -w, --overwrite          Always overwrite target file(s)
 
 SUBCOMMANDS:
-    add       Add a repo as a project
-    apply     apply remote files into a folder [aliases: a]
-    cache     cache handling
-    config    create custom configuration
+    add       Save a repo as a project
+    cache     Cache handling
+    config    Create a personal configuration
     help      Print this message or the help of the given subcommand(s)
-    new       initialize a new project [aliases: n]
 ```
 
-To generate a new project, you can use any repo:
+To download and generate a new project, you can use any repo:
 
 ```
-$ bp new your/repo
+$ bp your/repo
 ```
 
 ## Download
@@ -102,7 +109,7 @@ projects:
 And now run:
 
 ```
-$ bp new rust-starter
+$ bp rust-starter
 ```
 
 To personalize a project you can take input  and replace content:
@@ -149,7 +156,7 @@ new:
       path: .*
 ```
 
-You can set different actions and swaps for when people do `bp new` vs `bp apply`.
+You can set different actions and swaps for when people do `bp` vs `bp -f` (fetch and apply to current folder).
 
 For file operations such as renaming, moving and so on, you can use vanilla actions (`mv x y`, `rm x`).
 </details>
@@ -157,7 +164,7 @@ For file operations such as renaming, moving and so on, you can use vanilla acti
 
 ## :raising_hand_woman:     Configure user projects
 
-`bp new` will automatically display a list of projects if configure those.
+`bp` (with no args) will automatically display a list of projects if configure those.
 
 Projects define repos and custom actions and / or swaps you want to attach to each.
 
@@ -304,7 +311,7 @@ vendors:
 And now, you can use the `ghe:` prefix for your shortlinks:
 
 ```
-$ bp new ghe:user/repo
+$ bp ghe:user/repo
 ```
 
 You can check in the `.backpack.yaml` to your project to share it with your team. When `backpack` runs it will **pick it up automatically**.
@@ -317,13 +324,13 @@ $ bp config --init --global
 </details>
 
 <details>
-<summary><b>What's the difference between `new` and `apply`?</b></summary>
+<summary><b>What's the difference between `bp` and `bp -f`?</b></summary>
 
 ```
-$ bp new kriasoft/react-starter-kit my-react-project
+$ bp kriasoft/react-starter-kit my-react-project
 ```
 
-* Use `new` to create **a new project**  into `my-react-project`   
+* Create **a new project**  into `my-react-project`   
 * Resolves to [https://github.com/kriasoft/react-starter-kit](https://github.com/kriasoft/react-starter-kit)     
 * Finds the default branch, downloads it and caches locally. Next time you run, it'll be much faster.    
 
@@ -331,13 +338,13 @@ $ bp new kriasoft/react-starter-kit my-react-project
 
 
 ```
-$ bp apply kriasoft/react-starter-kit/-/.github
+$ bp -f kriasoft/react-starter-kit/-/.github
 ```
 
 Let's say you really like how `react-starter-kit` configured its Github Action, and you'd like to copy that to your **existing project**. You can do this:
 
 * Use `/-/` to access a subfolder   
-* Use `apply` to overlay files onto your current working directory    
+* Use `-f` to overlay files onto your current working directory    
 
 </details>
 
@@ -348,7 +355,7 @@ Let's say you really like how `react-starter-kit` configured its Github Action, 
 To maximize producitivity, you can do either of these, or all of these in sequence:
 
 1. Just copy material from a template repo, as a faster `git clone` that has built-in cache and knows how to take **parts of repos**.
-2. Embed **placeholder variables** in your template repo and have `backpack` swap these when doing `bp new` or `bp apply`
+2. Embed **placeholder variables** in your template repo and have `backpack` swap these when doing `bp` or `bp -f`
 3. **Execute actions** for input taking from a user, or for running install actions after a clone
 
 You can build a `.backpack-project.yml` into your template repo for defining actions and variables, or a `project` pointing to that repo in your central `backpack.yml`.
@@ -363,9 +370,7 @@ You can build a `.backpack-project.yml` into your template repo for defining act
 
 
 ```
-$ bp new
-or
-$ bp apply
+$ bp
 ```
 
 And follow the interactive menu, which will let you:
@@ -406,7 +411,7 @@ user/repo#wip -> takes the 'wip' branch
 Yes, use the folder notation `/-/`:
 
 ```
-$ bp new user/repo/-/path/to/folder dest-folder
+$ bp user/repo/-/path/to/folder dest-folder
 ```
 </details>
 
@@ -417,17 +422,17 @@ $ bp new user/repo/-/path/to/folder dest-folder
 Branches or tags can be used with the `#branch` specifier.
 
 ```
-$ bp new kriasoft/react-starter-kit#feature/redux my-starter
+$ bp kriasoft/react-starter-kit#feature/redux my-starter
 ```
 </details>
 
 <details><summary><b> Can I use backpack on empty or populated directories?</b></summary>
 
-Yes. Use `apply` to grab content and apply it to an existing empty or populated directories:
+Yes. Use `-f` to grab content and apply it to an existing empty or populated directories:
 
 ```
 $ cd your-directory
-$ bp apply user/repo .
+$ bp -f user/repo
 ```
 
 </details>
@@ -448,7 +453,7 @@ vendors:
 Note that in addition to the custom hosted `github.acme.com` server, we also specified a default org `my-org` above, so it saves a bit of typing. Then you can run:
 
 ```
-$ bp new gh:my-repo my-repo
+$ bp gh:my-repo my-repo
 ```
 </details>
 
@@ -457,7 +462,7 @@ $ bp new gh:my-repo my-repo
 Where it's non ambiguous, yes. For example, when you specify a subfolder:
 
 ```
-$ bp new user/repo/-/my-folder
+$ bp user/repo/-/my-folder
 ```
 
 Will grab just `my-folder` from `user/repo` and create in a destinaton folder called `my-folder`.
@@ -485,7 +490,7 @@ For example, this will give you a `.gitignore` file from another project:
 
 ```
 $ cd my-project
-$ bp apply rusty-ferris-club/backpack/-/.gitignore
+$ bp -f rusty-ferris-club/backpack/-/.gitignore
 $ tree
 .gitignore
 ```
@@ -494,7 +499,7 @@ This will copy just a single workflow file, but also the entire hierarchy of fol
 
 ```
 $ cd my-project
-$ bp apply rusty-ferris-club/backpack/-/.github/workflows/build.yml
+$ bp -f rusty-ferris-club/backpack/-/.github/workflows/build.yml
 $ tree
 .github/
   workflows/

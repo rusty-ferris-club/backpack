@@ -90,14 +90,13 @@ pub enum Overwrite {
     Custom(Box<dyn Fn(&str) -> bool>),
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Default)]
 pub enum CopyMode {
+    #[default]
     #[serde(rename = "new")]
     Copy,
     #[serde(rename = "apply")]
     Apply,
-    #[serde(rename = "all")]
-    All,
 }
 
 #[allow(clippy::struct_excessive_bools)]
