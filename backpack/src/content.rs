@@ -234,7 +234,7 @@ mod tests {
             None,
             &Location::from(&Url::parse("https://github.com/foo/bar").unwrap(), true).unwrap(),
             false
-        ).unwrap(),{ ".from" => norm_paths() });
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
 
         assert_yaml_snapshot!(Coordinate::new(
             Path::new("here"),
@@ -245,14 +245,14 @@ mod tests {
             )
             .unwrap(),
             false
-        ).unwrap(),{ ".from" => norm_paths() });
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
 
         assert_yaml_snapshot!(Coordinate::new(
             Path::new("here"),
             Some(Path::new("there")),
             &Location::from(&Url::parse("https://github.com/foo/bar").unwrap(), true).unwrap(),
             false
-        ).unwrap(),{ ".from" => norm_paths() });
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
 
         assert_yaml_snapshot!(Coordinate::new(
             Path::new("here"),
@@ -263,7 +263,7 @@ mod tests {
             )
             .unwrap(),
             false
-        ).unwrap(),{ ".from" => norm_paths() });
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
 
         assert_yaml_snapshot!(Coordinate::new(
             Path::new("tests"),
@@ -274,7 +274,7 @@ mod tests {
             )
             .unwrap(),
             false
-        ).unwrap(),{ ".from" => norm_paths() });
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
 
         assert_yaml_snapshot!(Coordinate::new(
             Path::new("tests"),
@@ -285,6 +285,6 @@ mod tests {
             )
             .unwrap(),
             false
-        ).unwrap(),{ ".from" => norm_paths() });
+        ).unwrap(),{ ".from" => norm_paths(), ".to" => norm_paths() });
     }
 }
