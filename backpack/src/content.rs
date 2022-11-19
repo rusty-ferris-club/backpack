@@ -8,12 +8,13 @@ use interactive_actions::{
     data::{Action, ActionHook},
     ActionRunner,
 };
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use tracing::warn;
 use walkdir;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Coordinate {
     pub from: PathBuf,
     pub to: PathBuf,
@@ -220,19 +221,22 @@ impl<'a> Deployer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use insta::assert_debug_snapshot;
+    use insta::assert_yaml_snapshot;
     use url::Url;
 
     #[test]
     fn test_coord_new() {
-        assert_debug_snapshot!(Coordinate::new(
+        let norm_paths =
+            || insta::dynamic_redaction(|value, _path| value.as_str().unwrap().replace('\\', "/"));
+
+        assert_yaml_snapshot!(Coordinate::new(
             Path::new("here"),
             None,
             &Location::from(&Url::parse("https://github.com/foo/bar").unwrap(), true).unwrap(),
             false
-        ));
+        ).unwrap(),{ ".from" => norm_paths() });
 
-        assert_debug_snapshot!(Coordinate::new(
+        assert_yaml_snapshot!(Coordinate::new(
             Path::new("here"),
             None,
             &Location::from(
@@ -241,16 +245,16 @@ mod tests {
             )
             .unwrap(),
             false
-        ));
+        ).unwrap(),{ ".from" => norm_paths() });
 
-        assert_debug_snapshot!(Coordinate::new(
+        assert_yaml_snapshot!(Coordinate::new(
             Path::new("here"),
             Some(Path::new("there")),
             &Location::from(&Url::parse("https://github.com/foo/bar").unwrap(), true).unwrap(),
             false
-        ));
+        ).unwrap(),{ ".from" => norm_paths() });
 
-        assert_debug_snapshot!(Coordinate::new(
+        assert_yaml_snapshot!(Coordinate::new(
             Path::new("here"),
             Some(Path::new("there")),
             &Location::from(
@@ -259,9 +263,9 @@ mod tests {
             )
             .unwrap(),
             false
-        ));
+        ).unwrap(),{ ".from" => norm_paths() });
 
-        assert_debug_snapshot!(Coordinate::new(
+        assert_yaml_snapshot!(Coordinate::new(
             Path::new("tests"),
             None,
             &Location::from(
@@ -270,9 +274,9 @@ mod tests {
             )
             .unwrap(),
             false
-        ));
+        ).unwrap(),{ ".from" => norm_paths() });
 
-        assert_debug_snapshot!(Coordinate::new(
+        assert_yaml_snapshot!(Coordinate::new(
             Path::new("tests"),
             Some(Path::new("there")),
             &Location::from(
@@ -281,6 +285,6 @@ mod tests {
             )
             .unwrap(),
             false
-        ));
+        ).unwrap(),{ ".from" => norm_paths() });
     }
 }

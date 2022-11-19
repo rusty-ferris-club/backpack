@@ -1,12 +1,9 @@
 ---
 source: backpack/src/content.rs
-expression: "Coordinate::new(Path::new(\"tests\"), Some(Path::new(\"there\")),\n    &Location::from(&Url::parse(\"https://github.com/foo/bar/-/fixtures/local-project.yaml\").unwrap(),\n                true).unwrap(), false)"
+expression: "Coordinate::new(Path::new(\"tests\"), Some(Path::new(\"there\")),\n        &Location::from(&Url::parse(\"https://github.com/foo/bar/-/fixtures/local-project.yaml\").unwrap(),\n                    true).unwrap(), false).unwrap()"
 ---
-Ok(
-    Coordinate {
-        from: "tests/fixtures/local-project.yaml",
-        to: "there/local-project.yaml",
-        is_file: true,
-        remove_from: false,
-    },
-)
+from: tests/fixtures/local-project.yaml
+to: there/local-project.yaml
+is_file: true
+remove_from: false
+

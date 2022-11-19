@@ -1,12 +1,9 @@
 ---
 source: backpack/src/content.rs
-expression: "Coordinate::new(Path::new(\"here\"), None,\n    &Location::from(&Url::parse(\"https://github.com/foo/bar\").unwrap(),\n                true).unwrap(), false)"
+expression: "Coordinate::new(Path::new(\"here\"), None,\n        &Location::from(&Url::parse(\"https://github.com/foo/bar\").unwrap(),\n                    true).unwrap(), false).unwrap()"
 ---
-Ok(
-    Coordinate {
-        from: "here",
-        to: ".",
-        is_file: false,
-        remove_from: false,
-    },
-)
+from: here
+to: "."
+is_file: false
+remove_from: false
+
