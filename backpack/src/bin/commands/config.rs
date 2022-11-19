@@ -5,18 +5,18 @@ use std::path::Path;
 
 pub fn command() -> Command<'static> {
     Command::new("config")
-        .about("create custom configuration")
+        .about("Create a personal configuration")
         .arg(
             Arg::new("init")
                 .short('i')
                 .long("init")
-                .help("initialize an empty configuration file")
+                .help("Initialize an empty configuration file")
                 .takes_value(false),
         )
         .arg(
             Arg::new("local")
                 .long("local")
-                .help("initialize local configuration")
+                .help("Initialize local configuration")
                 .takes_value(false),
         )
 }

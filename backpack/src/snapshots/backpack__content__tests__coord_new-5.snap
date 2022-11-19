@@ -1,0 +1,12 @@
+---
+source: backpack/src/content.rs
+expression: "Coordinate::new(Path::new(\"tests\"), None,\n    &Location::from(&Url::parse(\"https://github.com/foo/bar/-/fixtures/local-project.yaml\").unwrap(),\n                true).unwrap(), false)"
+---
+Ok(
+    Coordinate {
+        from: "tests/fixtures/local-project.yaml",
+        to: "fixtures/local-project.yaml",
+        is_file: true,
+        remove_from: false,
+    },
+)

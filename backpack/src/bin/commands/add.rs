@@ -1,7 +1,6 @@
 use anyhow::Context;
 use anyhow::Result as AnyResult;
 use backpack::config::Project;
-use backpack::data::CopyMode;
 use backpack::git::GitCmd;
 use backpack::git::GitProvider;
 use backpack::{config::Config, ui::Prompt};
@@ -9,12 +8,12 @@ use clap::{Arg, ArgMatches, Command};
 
 pub fn command() -> Command<'static> {
     Command::new("add")
-        .about("Add a repo as a project")
+        .about("Save a repo as a project")
         .arg(
             Arg::new("git")
                 .short('g')
                 .long("git")
-                .help("prefer a git url")
+                .help("Prefer a git url")
                 .takes_value(false),
         )
         .arg(Arg::new("repo"))
@@ -28,7 +27,7 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
     let (config, _) = Config::load_or_default().context("could not load configuration")?;
 
     let prompt = &mut Prompt::build(&config, false, None);
-    prompt.show_projects(&CopyMode::All);
+    prompt.show_projects(None);
     let name = prompt.ask_for_project_name(&repo)?;
 
     // add it to the configuration and save

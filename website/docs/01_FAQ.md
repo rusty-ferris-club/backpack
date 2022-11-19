@@ -27,7 +27,7 @@ vendors:
 And now, you can use the `ghe:` prefix for your shortlinks:
 
 ```
-$ bp new ghe:user/repo
+$ bp ghe:user/repo
 ```
 
 You can check in the `.backpack.yaml` to your project to share it with your team. When `backpack` runs it will **pick it up automatically**.
@@ -43,10 +43,10 @@ $ bp config --init --global
 <summary><b>What's the difference between `new` and `apply`?</b></summary>
 
 ```
-$ bp new kriasoft/react-starter-kit my-react-project
+$ bp kriasoft/react-starter-kit my-react-project
 ```
 
-* Use `new` to create **a new project**  into `my-react-project`   
+* Create **a new project**  into `my-react-project`   
 * Resolves to [https://github.com/kriasoft/react-starter-kit](https://github.com/kriasoft/react-starter-kit)     
 * Finds the default branch, downloads it and caches locally. Next time you run, it'll be much faster.    
 
@@ -54,13 +54,13 @@ $ bp new kriasoft/react-starter-kit my-react-project
 
 
 ```
-$ bp apply kriasoft/react-starter-kit/-/.github
+$ bp -f kriasoft/react-starter-kit/-/.github
 ```
 
 Let's say you really like how `react-starter-kit` configured its Github Action, and you'd like to copy that to your **existing project**. You can do this:
 
 * Use `/-/` to access a subfolder   
-* Use `apply` to overlay files onto your current working directory    
+* Use `-f` to overlay files onto your current working directory    
 
 </details>
 
@@ -71,7 +71,7 @@ Let's say you really like how `react-starter-kit` configured its Github Action, 
 To maximize producitivity, you can do either of these, or all of these in sequence:
 
 1. Just copy material from a template repo, as a faster `git clone` that has built-in cache and knows how to take **parts of repos**.
-2. Embed **placeholder variables** in your template repo and have `backpack` swap these when doing `bp new` or `bp apply`
+2. Embed **placeholder variables** in your template repo and have `backpack` swap these when doing `bp` or `bp -f`
 3. **Execute actions** for input taking from a user, or for running install actions after a clone
 
 You can build a `.backpack-project.yml` into your template repo for defining actions and variables, or a `project` pointing to that repo in your central `backpack.yml`.
@@ -86,9 +86,7 @@ You can build a `.backpack-project.yml` into your template repo for defining act
 
 
 ```
-$ bp new
-or
-$ bp apply
+$ bp
 ```
 
 And follow the interactive menu, which will let you:
@@ -129,7 +127,7 @@ user/repo#wip -> takes the 'wip' branch
 Yes, use the folder notation `/-/`:
 
 ```
-$ bp new user/repo/-/path/to/folder dest-folder
+$ bp user/repo/-/path/to/folder dest-folder
 ```
 </details>
 
@@ -140,7 +138,7 @@ $ bp new user/repo/-/path/to/folder dest-folder
 Branches or tags can be used with the `#branch` specifier.
 
 ```
-$ bp new kriasoft/react-starter-kit#feature/redux my-starter
+$ bp kriasoft/react-starter-kit#feature/redux my-starter
 ```
 </details>
 
@@ -150,7 +148,7 @@ Yes. Use `apply` to grab content and apply it to an existing empty or populated 
 
 ```
 $ cd your-directory
-$ bp apply user/repo .
+$ bp -f user/repo .
 ```
 
 </details>
@@ -171,7 +169,7 @@ vendors:
 Note that in addition to the custom hosted `github.acme.com` server, we also specified a default org `my-org` above, so it saves a bit of typing. Then you can run:
 
 ```
-$ bp new gh:my-repo my-repo
+$ bp gh:my-repo my-repo
 ```
 </details>
 
@@ -180,7 +178,7 @@ $ bp new gh:my-repo my-repo
 Where it's non ambiguous, yes. For example, when you specify a subfolder:
 
 ```
-$ bp new user/repo/-/my-folder
+$ bp user/repo/-/my-folder
 ```
 
 Will grab just `my-folder` from `user/repo` and create in a destinaton folder called `my-folder`.
@@ -208,7 +206,7 @@ For example, this will give you a `.gitignore` file from another project:
 
 ```
 $ cd my-project
-$ bp apply rusty-ferris-club/backpack/-/.gitignore
+$ bp -f rusty-ferris-club/backpack/-/.gitignore
 $ tree
 .gitignore
 ```
@@ -217,7 +215,7 @@ This will copy just a single workflow file, but also the entire hierarchy of fol
 
 ```
 $ cd my-project
-$ bp apply rusty-ferris-club/backpack/-/.github/workflows/build.yml
+$ bp -f rusty-ferris-club/backpack/-/.github/workflows/build.yml
 $ tree
 .github/
   workflows/

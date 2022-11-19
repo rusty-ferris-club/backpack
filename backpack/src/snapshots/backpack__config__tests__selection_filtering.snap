@@ -1,6 +1,6 @@
 ---
 source: backpack/src/config.rs
-expression: "config.projects_for_selection(&CopyMode::Copy)"
+expression: "config.projects_for_selection(Some(CopyMode::Copy))"
 ---
 [
     (
@@ -10,7 +10,7 @@ expression: "config.projects_for_selection(&CopyMode::Copy)"
             is_git: None,
             description: None,
             source: Local,
-            mode: None,
+            mode: Copy,
             actions: None,
             swaps: None,
         },
@@ -22,9 +22,7 @@ expression: "config.projects_for_selection(&CopyMode::Copy)"
             is_git: None,
             description: None,
             source: Local,
-            mode: Some(
-                Copy,
-            ),
+            mode: Copy,
             actions: None,
             swaps: None,
         },

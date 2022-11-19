@@ -15,8 +15,6 @@ fn main() {
         .init();
 
     let app = commands::root::command()
-        .subcommand(commands::new::command())
-        .subcommand(commands::apply::command())
         .subcommand(commands::cache::command())
         .subcommand(commands::add::command())
         .subcommand(commands::config::command());
@@ -25,14 +23,14 @@ fn main() {
 
     let res = match matches.subcommand() {
         Some(tup) => match tup {
-            ("new", subcommand_matches) => commands::new::run(&matches, subcommand_matches),
-            ("apply", subcommand_matches) => commands::apply::run(&matches, subcommand_matches),
             ("cache", subcommand_matches) => commands::cache::run(&matches, subcommand_matches),
             ("add", subcommand_matches) => commands::add::run(&matches, subcommand_matches),
             ("config", subcommand_matches) => commands::config::run(&matches, subcommand_matches),
-            _ => unreachable!(),
+            (maybe_shortlink, _) => {
+                unreachable!("unexpected subcommand: {}", maybe_shortlink);
+            }
         },
-        _ => unreachable!(),
+        _ => commands::root::run(&matches),
     };
 
     match res {

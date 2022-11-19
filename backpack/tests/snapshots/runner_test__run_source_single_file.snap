@@ -1,9 +1,9 @@
 ---
 source: backpack/tests/runner_test.rs
-expression: "run_with_no_config(Some(\"rusty-ferris-club/backpack-e2e-frozen/-/.github/workflows/build.yml\"),\n    None, CopyMode::Apply, false,\n    Some(RunnerEvents {\n            prompt_events: Some(vec![KeyCode :: Enter.into(),]),\n            actions_events: None,\n        }))"
+expression: "run_with_no_config(Some(\"rusty-ferris-club/backpack-e2e-frozen/-/.github/workflows/build.yml\"),\n    None, CopyMode::Apply, false,\n    Some(RunnerEvents { prompt_events: Some(vec![]), actions_events: None }))"
 ---
 Ok(
     [
-        "tests-out/.github/workflows/build.yml",
+        "tests-out/build.yml",
     ],
 )

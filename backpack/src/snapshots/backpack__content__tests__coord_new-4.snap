@@ -1,0 +1,12 @@
+---
+source: backpack/src/content.rs
+expression: "Coordinate::new(Path::new(\"here\"), Some(Path::new(\"there\")),\n    &Location::from(&Url::parse(\"https://github.com/foo/bar/-/subfolder/qux\").unwrap(),\n                true).unwrap(), false)"
+---
+Ok(
+    Coordinate {
+        from: "here/subfolder/qux",
+        to: "there",
+        is_file: false,
+        remove_from: false,
+    },
+)
