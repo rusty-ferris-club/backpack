@@ -1,0 +1,25 @@
+targets:
+  - platform: win32
+    arch: x64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-x86_64-windows.zip
+  - platform: linux
+    arch: x64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-x86_64-linux.tar.xz
+  - platform: darwin
+    arch: x64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-x86_64-macos.tar.xz
+  - platform: darwin
+    arch: arm64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-aarch64-macos.tar.xz
+npm:
+  publish: true
+  org: "@backpacktools"
+  name: backpack 
+  bin: bp
+  root: 
+    name: bpk
+    manifest: root.json
+    readme: ../README.md
+  sub: 
+    manifest: sub.json
+    readme: ../README.md
