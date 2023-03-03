@@ -8,24 +8,32 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tera::Tera;
 
+fn default<T: Default + PartialEq>(t: &T) -> bool {
+    *t == Default::default()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Swap {
     #[serde(rename = "key")]
     pub key: String,
 
     #[serde(rename = "val_template")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub val_template: Option<String>,
 
     #[serde(rename = "val")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub val: Option<String>,
 
     #[serde(rename = "path")]
     #[serde(with = "serde_regex")]
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub path: Option<Regex>,
 
     #[serde(default)]
     #[serde(rename = "kind")]
+    #[serde(skip_serializing_if = "default")]
     pub kind: SwapKind,
 }
 
@@ -51,7 +59,7 @@ impl Swap {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, Eq, PartialEq)]
 pub enum SwapKind {
     #[default]
     #[serde(rename = "all")]

@@ -54,6 +54,10 @@ version: 1
 #       base: github.enterprise.example.com
 "###;
 
+fn default<T: Default + PartialEq>(t: &T) -> bool {
+    *t == Default::default()
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum LoadSource {
     Default,
@@ -253,7 +257,7 @@ impl ProjectSource {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ProjectSourceKind {
     #[serde(rename = "local")]
     Local,
@@ -273,23 +277,29 @@ pub struct Project {
     pub shortlink: String,
 
     #[serde(rename = "is_git")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub is_git: Option<bool>,
 
     #[serde(rename = "description")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
     #[serde(rename = "source")]
     #[serde(default)]
+    #[serde(skip_serializing_if = "default")]
     pub source: ProjectSourceKind,
 
     #[serde(rename = "mode")]
     #[serde(default)]
+    #[serde(skip_serializing_if = "default")]
     pub mode: CopyMode,
 
     #[serde(rename = "actions")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub actions: Option<Vec<Action>>,
 
     #[serde(rename = "swaps")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub swaps: Option<Vec<Swap>>,
 }
 impl Project {
