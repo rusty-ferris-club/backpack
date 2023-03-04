@@ -63,19 +63,3 @@ yarn install v1.22.17
 [3/5] 🚚  Fetching packages...
 ```
 
-## Self describing repos
-
-If you fork `jvidalv/vital` to `your-user/vital`, you can add a local file called `.backpack-project.yml` with this:
-
-```yaml
-version: 1
-new:
-  vite-starter:
-    shortlink: your-user/vital # you can use any custom prefix here too
-    # is_git: true # force fetch from ssh
-    actions:
-      - name: run an install
-        run: yarn install
-```
-
-Now every time you use `bp` to clone `your-user/vital` which contains the `.backpack-project.yml` file, the actions will run automatically!

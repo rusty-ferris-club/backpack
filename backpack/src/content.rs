@@ -79,7 +79,7 @@ pub struct Deployer<'a> {
     action_runner: &'a mut ActionRunner,
 }
 
-const DONT_COPY: &[&str] = &[".git", ".backpack-project.yml"];
+const DONT_COPY: &[&str] = &[".git"];
 
 impl<'a> Deployer<'a> {
     pub fn new(action_runner: &'a mut ActionRunner) -> Self {

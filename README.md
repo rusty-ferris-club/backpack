@@ -131,37 +131,6 @@ projects:
       path: "README.md"
 ```
 
-## :smiley: Convert a repo into starter project
-
-If you include a `.backpack-project.yml` file in a repo, `backpack` will use it to understand which actions and swaps to make while copying content.
-
-<details><summary>Show example</summary>
-
-See [this example](https://github.com/rusty-ferris-club/backpack-e2e-frozen-localproj/blob/main/.backpack-project.yml):
-
-```yml
-version: 1
-new:
-    shortlink: ""
-    actions:
-    - name: name
-      hook: before
-      interaction:
-        kind: input
-        prompt: name of your project
-        out: project_name
-    swaps:
-    - key: crewl
-      val_template: "{{project_name}}"
-      path: .*
-```
-
-You can set different actions and swaps for when people do `bp` vs `bp -f` (fetch and apply to current folder).
-
-For file operations such as renaming, moving and so on, you can use vanilla actions (`mv x y`, `rm x`).
-</details>
-
-
 ## :raising_hand_woman:     Configure user projects
 
 `bp` (with no args) will automatically display a list of projects if configure those.
@@ -348,20 +317,6 @@ Let's say you really like how `react-starter-kit` configured its Github Action, 
 
 </details>
 
-<details>
-<summary><b>How can I define actions and variables for a repo I know?</b></summary>
-
-
-To maximize producitivity, you can do either of these, or all of these in sequence:
-
-1. Just copy material from a template repo, as a faster `git clone` that has built-in cache and knows how to take **parts of repos**.
-2. Embed **placeholder variables** in your template repo and have `backpack` swap these when doing `bp` or `bp -f`
-3. **Execute actions** for input taking from a user, or for running install actions after a clone
-
-You can build a `.backpack-project.yml` into your template repo for defining actions and variables, or a `project` pointing to that repo in your central `backpack.yml`.
-
-
-</details>
 
 
 

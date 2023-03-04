@@ -1,4 +1,4 @@
-use crate::config::{Config, RepoActionsConfig};
+use crate::config::Config;
 use crate::content::{Coordinate, Deployer};
 use crate::data::{CopyMode, Opts};
 use crate::fetch::Fetcher;
@@ -88,22 +88,7 @@ impl Runner {
         prompt.say_fetching();
         let (source, remove_source) = fetcher.fetch(&location, &assets, opts.no_cache)?;
 
-        // 1st priority: my own config project actions
-        let config_project_setup = sl.setup_actions(&shortlink);
-
-        // 2nd priority: remote source project actions
-        let source_project_setup = if RepoActionsConfig::exists(source.as_path()) {
-            let local_project = RepoActionsConfig::load(source.as_path())?;
-            if opts.mode == CopyMode::Apply {
-                local_project.apply
-            } else {
-                local_project.new
-            }
-        } else {
-            None
-        };
-
-        let project_setup = config_project_setup.or(source_project_setup);
+        let project_setup = sl.setup_actions(&shortlink);
 
         let mut action_runner = build_runner(events);
         let mut deployer = Deployer::new(&mut action_runner);

@@ -4,7 +4,7 @@ use anyhow::Result;
 use backpack::config::Config;
 use backpack::data::{CopyMode, Opts};
 use backpack::run::{Runner, RunnerEvents};
-use insta::{assert_debug_snapshot, assert_yaml_snapshot};
+use insta::assert_debug_snapshot;
 use requestty_ui::events::KeyCode;
 use serial_test::serial;
 use walkdir::{DirEntry, WalkDir};
@@ -173,54 +173,6 @@ fn test_run_source_gist() {
             actions_events: None,
         }),
     ));
-}
-
-#[test]
-#[serial]
-fn test_run_with_local_project_actions() {
-    assert_yaml_snapshot!(run_with_no_config(
-        Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
-        Some("my-project1"),
-        CopyMode::Copy,
-        false,
-        Some(RunnerEvents {
-            prompt_events: Some(vec![]),
-            actions_events: Some(vec![
-                KeyCode::Char('f').into(), // name: 'foo'
-                KeyCode::Char('o').into(), //
-                KeyCode::Char('o').into(), //
-                KeyCode::Enter.into(),     //
-            ]),
-        }),
-    )
-    .unwrap());
-    assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project1/test.txt").unwrap());
-}
-
-#[test]
-#[serial]
-fn test_run_with_local_project_actions_git_mode() {
-    // dont run this in CI, git requires a registered identity
-    if env::var("CI").is_err() {
-        let res = run_with_no_config(
-            Some("rusty-ferris-club/backpack-e2e-frozen-localproj"),
-            Some("my-project1"),
-            CopyMode::Copy,
-            true,
-            Some(RunnerEvents {
-                prompt_events: Some(vec![]),
-                actions_events: Some(vec![
-                    KeyCode::Char('f').into(), // name: 'foo'
-                    KeyCode::Char('o').into(), //
-                    KeyCode::Char('o').into(), //
-                    KeyCode::Enter.into(),     //
-                ]),
-            }),
-        )
-        .unwrap();
-        assert_yaml_snapshot!(res);
-        assert_yaml_snapshot!(fs::read_to_string("tests-out/my-project1/test.txt").unwrap());
-    }
 }
 
 #[test]

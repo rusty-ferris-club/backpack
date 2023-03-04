@@ -64,20 +64,6 @@ Let's say you really like how `react-starter-kit` configured its Github Action, 
 
 </details>
 
-<details>
-<summary><b>How can I define actions and variables for a repo I know?</b></summary>
-
-
-To maximize producitivity, you can do either of these, or all of these in sequence:
-
-1. Just copy material from a template repo, as a faster `git clone` that has built-in cache and knows how to take **parts of repos**.
-2. Embed **placeholder variables** in your template repo and have `backpack` swap these when doing `bp` or `bp -f`
-3. **Execute actions** for input taking from a user, or for running install actions after a clone
-
-You can build a `.backpack-project.yml` into your template repo for defining actions and variables, or a `project` pointing to that repo in your central `backpack.yml`.
-
-
-</details>
 
 
 
