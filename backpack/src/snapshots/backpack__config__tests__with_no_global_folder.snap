@@ -2,22 +2,7 @@
 source: backpack/src/config.rs
 expression: config
 ---
-(
-    Config {
-        projects: Some(
-            {
-                "rust": Project {
-                    shortlink: "correct/local",
-                    is_git: None,
-                    description: None,
-                    source: Local,
-                    mode: Copy,
-                    actions: None,
-                    swaps: None,
-                },
-            },
-        ),
-        vendors: None,
-    },
-    Local,
-)
+Config {
+    projects: None,
+    vendors: None,
+}

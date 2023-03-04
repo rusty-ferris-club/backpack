@@ -85,6 +85,28 @@ $ cd your-repo
 $ bp add
 ```
 
+Note that if a repo contains a `.backpack-project.yaml` file, it will be automatically used. A `.backpack-project.yaml` file is a way for the repo author to give instructions for how to make a template out of their project, here's an example:
+
+```yaml
+project:
+  shortlink: kriasoft/react-starter-kit
+  actions:
+  - name: "name of file"
+    hook: before
+    interaction:
+      kind: input
+      prompt: name of your app
+      out: file_name
+  swaps:
+  - key: README.md
+    val_template: "{{file_name}}"
+    path: .*
+  - key: tsconfig.json
+    val: ts-config.json
+```
+
+You create this file and format in your own repos to make them _backpack friendly_.
+
 ## :hammer: Create starters manually
 
 Create a `backpack.yaml`:
@@ -131,6 +153,60 @@ projects:
       path: "README.md"
 ```
 
+Example of a fully personalize config in my `~/.backpack/backpack.yaml`, with minimal prompts (generating from [rust-starter](https://github.com/rusty-ferris-club/rust-starter)):
+
+<details>
+  <summary>Show example</summary>
+
+```yaml
+projects:
+  jondot-rs:
+    shortlink: rusty-ferris-club/rust-starter
+    actions:
+      - name: project
+        interaction:
+          kind: input
+          prompt: project name (e.g. newtool)
+          out: project
+        hook: before
+      - name: description
+        interaction:
+          kind: input
+          prompt: description (e.g. one liner)
+          out: description
+        hook: before
+    swaps:
+      - key: __V_PROJECT_NAME__
+        val_template: "{{project}}"
+        path: ".*"
+      - key: __V_REPO_NAME__
+        val_template: "jondot/{{project}}"
+        path: ".*"
+      - key: __V_REPO_URL__
+        val_template: "https://github.com/jondot/{{project}}"
+        path: ".*"
+      - key: __V_PROJECT_FORMULA__
+        val_template: "{{project | capitalize}}"
+        path: ".*"
+      - key: __V_TAP_NAME__
+        val: "jondot/homebrew-tap"
+        path: ".*"
+      - key: __V_BIN_NAME__
+        val_template: "{{project}}"
+        path: ".*"
+      - key: __v_bin_name__
+        val_template: "{{project}}"
+        path: ".*"
+      - key: __V_AUTHOR__
+        val: "dotan@example.com"
+        path: ".*"
+      - key: __V_DESCRIPTION__
+        val_template: "{{description}}"
+        path: ".*"
+```
+
+</details>
+
 ## :raising_hand_woman:     Configure user projects
 
 `bp` (with no args) will automatically display a list of projects if configure those.
@@ -155,15 +231,6 @@ Add to the `projects` section:
 projects:
   rust-starter: 
     shortlink: rusty-ferris-club/rust-starter
-```
-
-Optionally indicate it is *only* suitable for applying into an existing folder:
-
-```yaml
-projects:
-  rust-starter: 
-    shortlink: rusty-ferris-club/rust-starter
-    mode: apply # or new, or remove property.
 ```
 
 
@@ -259,11 +326,10 @@ How can I set up an enterprise / hosted git, or use Gitlab or others?
 </b></summary>
 You can use custom git vendors.
 
-Start by generating a **project-local** configuration file:
+Start by generating a  configuration file:
 
 ```
 $ bp config --init
-wrote: .backpack.yaml.
 ```
 
 Example: configure a Github Enterprise instance:
@@ -283,13 +349,7 @@ And now, you can use the `ghe:` prefix for your shortlinks:
 $ bp ghe:user/repo
 ```
 
-You can check in the `.backpack.yaml` to your project to share it with your team. When `backpack` runs it will **pick it up automatically**.
 
-You can also generate a **global user config** by specifying:
-
-```
-$ bp config --init --global
-```
 </details>
 
 <details>

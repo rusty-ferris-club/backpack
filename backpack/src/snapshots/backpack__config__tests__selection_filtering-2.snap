@@ -1,16 +1,34 @@
 ---
 source: backpack/src/config.rs
-expression: "config.projects_for_selection(Some(CopyMode::Apply))"
+expression: config.projects_for_selection()
 ---
 [
+    (
+        "all",
+        Project {
+            shortlink: "jondot/three",
+            is_git: None,
+            description: None,
+            actions: None,
+            swaps: None,
+        },
+    ),
     (
         "apply_only",
         Project {
             shortlink: "jondot/two",
             is_git: None,
             description: None,
-            source: Local,
-            mode: Apply,
+            actions: None,
+            swaps: None,
+        },
+    ),
+    (
+        "copy_only",
+        Project {
+            shortlink: "jondot/one",
+            is_git: None,
+            description: None,
             actions: None,
             swaps: None,
         },

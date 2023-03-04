@@ -64,7 +64,7 @@ impl Runner {
         });
 
         // load from direct file, or magically load from 'local' then 'global', then default
-        let (config, _) = opts.config_file.as_ref().map_or_else(
+        let config = opts.config_file.as_ref().map_or_else(
             || Config::load_or_default().context("could not load configuration"),
             |f| Config::from_path(Path::new(f)),
         )?;
@@ -73,7 +73,7 @@ impl Runner {
 
         let prompt = &mut Prompt::build(&config, opts.show_progress, events);
 
-        let (shortlink, dest, should_confirm) = prompt.fill_missing(shortlink, dest, opts)?;
+        let (shortlink, dest, should_confirm) = prompt.fill_missing(shortlink, dest)?;
 
         let sl = Shortlink::new(&config, self.git.as_ref());
 

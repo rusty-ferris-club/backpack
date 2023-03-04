@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::{env, fs};
 
 use anyhow::Result;
@@ -20,13 +21,17 @@ fn ensure_no_config() {
     }
 }
 
-fn list_folder(dest: &str) -> Vec<String> {
+fn list_folder(dest: &Path) -> Vec<String> {
     let mut r = WalkDir::new(dest)
         .into_iter()
         .filter_map(Result::ok)
         .filter(|file| file.metadata().unwrap().is_file())
         .map(DirEntry::into_path)
-        .map(|p| p.to_string_lossy().replace('\\', "/"))
+        .map(|p| {
+            p.to_string_lossy()
+                .replace(env::current_dir().unwrap().to_str().unwrap(), "")
+                .replace('\\', "/")
+        })
         .collect::<Vec<_>>();
     r.sort();
     r
@@ -40,15 +45,25 @@ fn run(
     is_git: bool,
     events: Option<RunnerEvents>,
 ) -> Result<Vec<String>> {
-    let tests_out = "tests-out";
-    fs::remove_dir_all(tests_out).ok();
-    fs::create_dir(tests_out).unwrap();
+    // save current dir for restore
     let current_dir = env::current_dir().unwrap();
-    env::set_current_dir(tests_out).unwrap();
+    let tests_out = current_dir.join("tests-out");
+    fs::remove_dir_all(&tests_out).ok();
+    fs::create_dir(&tests_out).unwrap();
+
+    // rewire global config to this test-oriented global config folder
+    let conf_dir = tests_out.join("backpack-config");
+    fs::create_dir(&conf_dir).unwrap();
     if let Some(config) = local_config {
-        let _res = fs::remove_file(".backpack.yaml");
-        fs::write(".backpack.yaml", config).unwrap();
+        let _res = fs::remove_file(conf_dir.join("backpack.yaml"));
+        fs::write(conf_dir.join("backpack.yaml"), config).unwrap();
     }
+    env::set_var("BP_FOLDER", &conf_dir);
+
+    // set up where our actual generated content will be and make bp think it's the current folder
+    let content = tests_out.join("content");
+    fs::create_dir(&content).unwrap();
+    env::set_current_dir(&content).unwrap();
 
     if let Some(events) = events {
         Runner::default().run_with_events(
@@ -82,7 +97,7 @@ fn run(
     };
 
     env::set_current_dir(current_dir).unwrap();
-    Ok(list_folder(tests_out))
+    Ok(list_folder(&content))
 }
 
 fn run_with_no_config(

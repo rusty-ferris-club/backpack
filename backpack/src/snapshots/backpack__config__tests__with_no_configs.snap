@@ -2,10 +2,7 @@
 source: backpack/src/config.rs
 expression: config
 ---
-(
-    Config {
-        projects: None,
-        vendors: None,
-    },
-    Default,
-)
+Config {
+    projects: None,
+    vendors: None,
+}

@@ -5,7 +5,7 @@ use crate::{
     data::{Assets, Location},
     git::GitProvider,
     templates::Swap,
-    vendors::{Vendor, Vendors},
+    vendors::{LocalGit, Vendor, Vendors},
 };
 use anyhow::Result as AnyResult;
 use interactive_actions::data::Action;
@@ -36,8 +36,7 @@ fn expand<'a>(
     } else if Path::new(shortlink).exists() {
         let p = Path::new(shortlink);
         let local_git_url = Url::parse(&format!("file://{}.git", p.to_string_lossy()))?;
-
-        let vendor = vendors.lookup(local_git_url.scheme())?;
+        let vendor: Box<dyn Vendor> = Box::new(LocalGit {});
         (vendor, Location::from(&local_git_url, true)?)
     } else if let Some(caps) = RE_GIT.captures(shortlink) {
         let domain = caps

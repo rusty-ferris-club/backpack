@@ -41,7 +41,6 @@ impl<'a> Vendors<'a> {
             "gist.github.com" | "gist" => Ok(Box::new(GithubGist::new(base))),
             "gl" | "gitlab.com" | "gitlab" => Ok(Box::new(Gitlab::new(base))),
             "bb" | "bitbucket.org" | "bitbucket" => Ok(Box::new(BitBucket::new(base))),
-            "file" => Ok(Box::new(LocalGit::new(base))),
             _ => anyhow::bail!("no vendor found for: {}", token),
         }
     }
@@ -107,20 +106,11 @@ impl Vendor for Github {
     }
 }
 
-pub struct LocalGit {
-    base: String,
-}
+pub struct LocalGit {}
 
-impl LocalGit {
-    pub fn new(base: Option<&str>) -> Self {
-        Self {
-            base: base.map_or_else(|| "file".to_string(), ToString::to_string),
-        }
-    }
-}
 impl Vendor for LocalGit {
     fn base(&self) -> &str {
-        self.base.as_str()
+        "file"
     }
     #[tracing::instrument(name = "localgit_resolve", skip_all, err)]
     fn resolve(&self, location: &Location, _git: &dyn GitProvider) -> AnyResult<Assets> {

@@ -1,5 +1,4 @@
 use crate::config::Config;
-use crate::data::{CopyMode, Opts};
 use crate::run::RunnerEvents;
 use crate::templates::CopyResult;
 use anyhow::{anyhow, Context, Result as AnyResult};
@@ -53,12 +52,11 @@ impl<'a> Prompt<'a> {
         &mut self,
         shortlink: Option<&str>,
         dest: Option<&str>,
-        opts: &Opts,
     ) -> AnyResult<(String, Option<String>, bool)> {
         match (shortlink, dest) {
             (Some(s), Some(d)) => Ok((s.to_string(), Some(d.to_string()), false)),
             (None, d) => {
-                let shortlink = if let Some(project) = self.pick_project(&opts.mode)? {
+                let shortlink = if let Some(project) = self.pick_project()? {
                     project
                 } else {
                     self.input_shortlink()?
@@ -78,33 +76,25 @@ impl<'a> Prompt<'a> {
     /// # Errors
     ///
     /// This function will return an error if interaction is killed
-    pub fn pick_project(&self, mode: &CopyMode) -> AnyResult<Option<String>> {
+    pub fn pick_project(&self) -> AnyResult<Option<String>> {
         // accept free input, user wants to input a shortlink directly
         // display where each project comes from
         // impl pick dest, where we do a "my-project" and 1,2,3,4 if exists.
         // add a final confirmation with the data
         // move all UI stuff into prompt
-        match self.config.projects_for_selection(Some(mode.clone())) {
+        match self.config.projects_for_selection() {
             projects if !projects.is_empty() => {
                 let options = projects
                     .iter()
-                    .map(|(k, p)| {
-                        format!(
-                            "{} ({})",
-                            k,
-                            if CopyMode::Apply == p.mode {
-                                "apply"
-                            } else {
-                                "new"
-                            }
-                        )
-                    })
+                    .map(|(k, _p)| k)
+                    .copied()
                     .collect::<Vec<_>>();
 
+                let len = options.len();
                 let question = Question::select("question")
                     .message("Project (esc for shortlink)")
                     .on_esc(OnEsc::SkipQuestion)
-                    .choices(&options)
+                    .choices(options)
                     .build();
 
                 let selection = requestty::prompt(vec![question])?
@@ -112,7 +102,7 @@ impl<'a> Prompt<'a> {
                     .and_then(|a| a.as_list_item().cloned());
 
                 match selection {
-                    Some(s) if s.index < options.len() => {
+                    Some(s) if s.index < len => {
                         Ok(projects.get(s.index).map(|(k, _)| (*k).to_string()))
                     }
                     _ => Ok(None),
@@ -123,9 +113,9 @@ impl<'a> Prompt<'a> {
     }
 
     /// Shows the list of projects
-    pub fn show_projects(&self, mode: Option<CopyMode>) {
+    pub fn show_projects(&self) {
         println!("Current projects:");
-        match self.config.projects_for_selection(mode) {
+        match self.config.projects_for_selection() {
             projects if !projects.is_empty() => {
                 for (name, project) in projects {
                     println!(

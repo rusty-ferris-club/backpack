@@ -2,31 +2,17 @@
 source: backpack/src/config.rs
 expression: config_fully_loaded
 ---
-(
-    Config {
-        projects: Some(
-            {
-                "nodejs": Project {
-                    shortlink: "correct/global",
-                    is_git: None,
-                    description: None,
-                    source: Local,
-                    mode: Copy,
-                    actions: None,
-                    swaps: None,
-                },
-                "rust": Project {
-                    shortlink: "correct/local",
-                    is_git: None,
-                    description: None,
-                    source: Local,
-                    mode: Copy,
-                    actions: None,
-                    swaps: None,
-                },
+Config {
+    projects: Some(
+        {
+            "nodejs": Project {
+                shortlink: "correct/global",
+                is_git: None,
+                description: None,
+                actions: None,
+                swaps: None,
             },
-        ),
-        vendors: None,
-    },
-    Merged,
-)
+        },
+    ),
+    vendors: None,
+}

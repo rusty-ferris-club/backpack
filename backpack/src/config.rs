@@ -1,9 +1,7 @@
-use crate::data::CopyMode;
 use crate::templates::Swap;
 use anyhow::{anyhow, bail, Context, Result as AnyResult};
 use dirs;
 use interactive_actions::data::Action;
-use merge_struct;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
@@ -11,7 +9,7 @@ use std::{env, fs};
 
 const GLOBAL_CONFIG_FOLDER: &str = ".backpack";
 const GLOBAL_CONFIG_FILE: &str = "backpack.yaml";
-const LOCAL_CONFIG_FILE: &str = ".backpack.yaml";
+pub const PROJECT_CONFIG_FILE: &str = ".backpack-project.yaml";
 const CONFIG_TEMPLATE: &str = r###"
 
 #
@@ -54,18 +52,6 @@ version: 1
 #       base: github.enterprise.example.com
 "###;
 
-fn default<T: Default + PartialEq>(t: &T) -> bool {
-    *t == Default::default()
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum LoadSource {
-    Default,
-    Local,
-    Global,
-    Merged,
-}
-
 pub type ProjectMap = BTreeMap<String, Project>;
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
@@ -94,47 +80,15 @@ impl Config {
     }
 
     #[tracing::instrument(name = "config_path", skip_all, err)]
-    pub fn from_path(file: &Path) -> AnyResult<(Self, LoadSource)> {
-        Ok((
-            Self::from_text(&fs::read_to_string(file)?)?,
-            LoadSource::Local,
-        ))
+    pub fn from_path(file: &Path) -> AnyResult<Self> {
+        Self::from_text(&fs::read_to_string(file)?)
     }
 
     #[tracing::instrument(name = "config_load", skip_all, err)]
-    pub fn load_or_default() -> AnyResult<(Self, LoadSource)> {
-        let (local, global) = (Self::local_config_file(), Self::global_config_file()?);
-        let configs = (
-            if local.exists() {
-                Some(local.as_path())
-            } else {
-                None
-            },
-            if global.exists() {
-                Some(global.as_path())
-            } else {
-                None
-            },
-        );
-
-        let conf = match configs {
-            (Some(local_config), None) => (
-                Self::load(&fs::read_to_string(local_config)?)?,
-                LoadSource::Local,
-            ),
-            (None, Some(global_config)) => (
-                Self::load(&fs::read_to_string(global_config)?)?,
-                LoadSource::Global,
-            ),
-            (Some(local_config), Some(global_config)) => {
-                let g = Self::load(&fs::read_to_string(global_config)?)?;
-                let c = Self::load(&fs::read_to_string(local_config)?)?;
-                (merge_struct::merge(&g, &c)?, LoadSource::Merged)
-            }
-            (None, None) => (Self::default(), LoadSource::Default),
-        };
-
-        Ok(conf)
+    pub fn load_or_default() -> AnyResult<Self> {
+        Ok(Self::global_config_file()
+            .and_then(|c| Self::from_path(&c))
+            .unwrap_or_default())
     }
 
     /// Return a user's home directory
@@ -144,15 +98,13 @@ impl Config {
     /// This function will return an error if it cannot get the home dir
     pub fn global_config_folder() -> AnyResult<PathBuf> {
         // change config dir to be user home
-        let env_global_folder = env::var("BP_FOLDER");
-        Ok(dirs::home_dir()
-            .ok_or_else(|| anyhow!("no home dir found"))?
-            .join(env_global_folder.unwrap_or_else(|_| GLOBAL_CONFIG_FOLDER.to_string())))
-    }
-
-    pub fn local_config_file() -> PathBuf {
-        let local_conf = env::var("BP_CONF");
-        Path::new(&local_conf.unwrap_or_else(|_| LOCAL_CONFIG_FILE.to_string())).to_path_buf()
+        if let Ok(env_global_folder) = env::var("BP_FOLDER") {
+            Ok(PathBuf::from(env_global_folder))
+        } else {
+            Ok(dirs::home_dir()
+                .ok_or_else(|| anyhow!("no home dir found"))?
+                .join(GLOBAL_CONFIG_FOLDER))
+        }
     }
 
     /// Get the global config file location
@@ -171,17 +123,6 @@ impl Config {
     /// This function will return an error if there's no home directory
     pub fn global_cache_folder() -> AnyResult<PathBuf> {
         Self::global_config_folder().map(|c| c.join("cache"))
-    }
-
-    /// Initialize a local configuration
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if there's already a configuration file
-    pub fn init_local() -> AnyResult<PathBuf> {
-        let path = Self::local_config_file();
-        Self::init_to(path.as_path())?;
-        Ok(path)
     }
 
     /// Initialize a global configuration
@@ -226,14 +167,10 @@ impl Config {
     }
 
     #[allow(clippy::needless_pass_by_value)]
-    pub fn projects_for_selection(&self, mode: Option<CopyMode>) -> Vec<(&String, &Project)> {
+    pub fn projects_for_selection(&self) -> Vec<(&String, &Project)> {
         self.projects
             .as_ref()
-            .map(|ps| {
-                ps.iter()
-                    .filter(|t| mode.as_ref().map_or(true, |m| t.1.mode.eq(m)))
-                    .collect::<Vec<_>>()
-            })
+            .map(|ps| ps.iter().collect::<Vec<_>>())
             .unwrap_or_default()
     }
 
@@ -244,30 +181,32 @@ impl Config {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProjectSource {
-    #[serde(rename = "name")]
-    pub name: String,
-    #[serde(rename = "link")]
-    pub link: String,
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct LocalProjectConfig {
+    pub project: Project,
 }
-impl ProjectSource {
-    pub fn file_name(&self) -> String {
-        format!("{}.yaml", self.name)
+impl LocalProjectConfig {
+    /// Load local project from text
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if IO fails
+    pub fn from_text(text: &str) -> AnyResult<Self> {
+        let conf: Self = serde_yaml::from_str(text)?;
+        Ok(conf)
     }
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum ProjectSourceKind {
-    #[serde(rename = "local")]
-    Local,
-    #[serde(rename = "external")]
-    External,
-}
-
-impl Default for ProjectSourceKind {
-    fn default() -> Self {
-        Self::Local
+    /// Load local project defs from path
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub fn from_path(path: &Path) -> AnyResult<Option<Self>> {
+        if path.exists() {
+            Ok(Some(Self::from_text(&fs::read_to_string(path)?)?))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -283,16 +222,6 @@ pub struct Project {
     #[serde(rename = "description")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-
-    #[serde(rename = "source")]
-    #[serde(default)]
-    #[serde(skip_serializing_if = "default")]
-    pub source: ProjectSourceKind,
-
-    #[serde(rename = "mode")]
-    #[serde(default)]
-    #[serde(skip_serializing_if = "default")]
-    pub mode: CopyMode,
 
     #[serde(rename = "actions")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -351,17 +280,15 @@ mod tests {
 projects:
    copy_only: 
      shortlink: jondot/one
-     mode: new
    apply_only: 
      shortlink: jondot/two
-     mode: apply
    all: 
      shortlink: jondot/three
 "###,
         )
         .unwrap();
-        assert_debug_snapshot!(config.projects_for_selection(Some(CopyMode::Copy)));
-        assert_debug_snapshot!(config.projects_for_selection(Some(CopyMode::Apply)));
+        assert_debug_snapshot!(config.projects_for_selection());
+        assert_debug_snapshot!(config.projects_for_selection());
     }
 
     #[test]
