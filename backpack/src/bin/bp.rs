@@ -21,8 +21,9 @@ fn main() {
 
     let matches = app.clone().get_matches();
 
-    let res = match matches.subcommand() {
-        Some(tup) => match tup {
+    let res = matches.subcommand().map_or_else(
+        || commands::root::run(&matches),
+        |tup| match tup {
             ("cache", subcommand_matches) => commands::cache::run(&matches, subcommand_matches),
             ("add", subcommand_matches) => commands::add::run(&matches, subcommand_matches),
             ("config", subcommand_matches) => commands::config::run(&matches, subcommand_matches),
@@ -30,15 +31,14 @@ fn main() {
                 unreachable!("unexpected subcommand: {}", maybe_shortlink);
             }
         },
-        _ => commands::root::run(&matches),
-    };
+    );
 
     match res {
         Ok(ok) => {
-            exit(if ok { 0 } else { 1 });
+            exit(i32::from(!ok));
         }
         Err(err) => {
-            eprintln!("error: {}", err);
+            eprintln!("error: {err}");
             exit(1)
         }
     }

@@ -432,7 +432,7 @@ mod tests {
             Swap {
                 key: " don't".to_string(),
                 kind: SwapKind::All,
-                val: Some("".to_string()),
+                val: Some(String::new()),
                 ..Default::default()
             },
             Swap {

@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use crate::{
     config::{Config, ProjectSetupActions},
@@ -74,7 +74,7 @@ fn expand<'a>(
         (vendor, Location::from(&url, is_git)?)
     } else {
         let vendor = vendors.lookup("")?;
-        let url = Url::parse(&format!("https://{}/{}", vendor.base(), shortlink))?;
+        let url = Url::parse(&format!("https://{}/{shortlink}", vendor.base()))?;
         (vendor, Location::from(&url, is_git)?)
     };
 
@@ -178,7 +178,7 @@ vendors:
         )
         .unwrap();
 
-        let link = format!("{}{}{}", vendor, slug, gref);
+        let link = format!("{vendor}{slug}{gref}");
         let vendors = Vendors::new(config.vendors.as_ref());
         assert_debug_snapshot!((link.clone(), expand(&link, false, &vendors)));
     }
@@ -196,7 +196,7 @@ vendors:
             gref.replace('/', "_")
         );
 
-        let link = format!("{}{}{}", vendor, slug, gref);
+        let link = format!("{vendor}{slug}{gref}");
         let vendors = Vendors::new(None);
         assert_debug_snapshot!((link.clone(), expand(&link, false, &vendors)));
     }
@@ -223,7 +223,7 @@ vendors:
             gref.replace('/', "_")
         );
 
-        let link = format!("{}{}{}", vendor, slug, gref);
+        let link = format!("{vendor}{slug}{gref}");
         let vendors = Vendors::new(None);
         assert_debug_snapshot!((link.clone(), expand(&link, false, &vendors)));
     }
@@ -242,7 +242,7 @@ vendors:
             gref.replace('/', "_")
         );
 
-        let link = format!("{}{}{}", vendor, slug, gref);
+        let link = format!("{vendor}{slug}{gref}");
         let vendors = Vendors::new(None);
         assert_debug_snapshot!((link.clone(), expand(&link, false, &vendors)));
     }

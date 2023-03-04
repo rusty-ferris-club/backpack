@@ -23,7 +23,7 @@ impl GitProvider for TestGitProvider {
         Ok(())
     }
     fn get_local_url(&self) -> anyhow::Result<String> {
-        Ok("".to_string())
+        Ok(String::new())
     }
 }
 

@@ -2,7 +2,7 @@ use crate::config::{Config, RepoActionsConfig};
 use crate::content::{Coordinate, Deployer};
 use crate::data::{CopyMode, Opts};
 use crate::fetch::Fetcher;
-use crate::git::{GitCmd, GitProvider};
+use crate::git::{self};
 use crate::shortlink::Shortlink;
 use crate::ui::Prompt;
 use anyhow::{Context, Result};
@@ -11,8 +11,9 @@ use requestty_ui::events::KeyEvent;
 use std::collections::BTreeMap;
 use std::path::Path;
 
+#[derive(Default)]
 pub struct Runner {
-    git: Box<dyn GitProvider>,
+    git: Box<git::GitCmd>,
 }
 
 #[derive(Clone, Debug)]
@@ -21,13 +22,6 @@ pub struct RunnerEvents {
     pub actions_events: Option<Vec<KeyEvent>>,
 }
 
-impl Default for Runner {
-    fn default() -> Self {
-        Self {
-            git: Box::new(GitCmd::default()),
-        }
-    }
-}
 impl Runner {
     /// Run the workflow with progress
     ///

@@ -35,9 +35,9 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
     if let Some(projects) = config.projects.as_mut() {
         projects.insert(name.clone(), Project::from_link(&repo));
     }
-    if prompt.are_you_sure(&format!("Save '{}' ({}) to configuration?", name, &repo))? {
+    if prompt.are_you_sure(&format!("Save '{name}' ({}) to configuration?", &repo))? {
         config.save()?;
-        prompt.say(&format!("Saved '{}' to global config.", name));
+        prompt.say(&format!("Saved '{name}' to global config."));
     }
     prompt.suggest_edit(
         "Would you like to add actions? (will open editor)",

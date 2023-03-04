@@ -44,7 +44,7 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
         print_path("local", local.as_path());
 
         let t = Config::load_or_default()?.0.to_text()?;
-        println!("{}", t);
+        println!("{t}");
     }
 
     Ok(true)

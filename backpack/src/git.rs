@@ -77,7 +77,7 @@ impl GitProvider for GitCmd {
             .arg("ls-remote")
             .arg(rremote)
             .output()
-            .with_context(|| format!("cannot run git ls-remote on '{}'", rremote))?;
+            .with_context(|| format!("cannot run git ls-remote on '{rremote}'"))?;
         if !process.status.success() {
             log::error!("git ls-remote failed. stderr output:");
             let err = String::from_utf8_lossy(&process.stderr);

@@ -155,7 +155,7 @@ impl<'a> Prompt<'a> {
                     Ok(())
                 }
             })
-            .message(format!("A name for '{}'?", repo))
+            .message(format!("A name for '{repo}'?"))
             .build();
         let name = self
             .prompt_one(question)?
@@ -256,12 +256,12 @@ impl<'a> Prompt<'a> {
     }
 
     pub fn say_action(&self, name: &str) {
-        println!("{}", name);
+        println!("{name}");
     }
 
     pub fn say_actions(&self, number: usize) {
         if self.show_progress {
-            println!("🍿 Running {} action(s):", number);
+            println!("🍿 Running {number} action(s):");
         }
     }
 
@@ -307,7 +307,7 @@ impl<'a> Prompt<'a> {
     }
 
     pub fn say(&self, text: &str) {
-        println!("{}", text);
+        println!("{text}");
     }
 
     /// Ask if user wants to edit a file and open editor
@@ -359,7 +359,7 @@ impl<'a> Prompt<'a> {
 /// This function will return an error if too many projects have been tried
 pub fn guess_dest() -> AnyResult<String> {
     Ok((1..99)
-        .map(|idx| PathBuf::from(format!("my-project{}", idx)))
+        .map(|idx| PathBuf::from(format!("my-project{idx}")))
         .find(|p| !p.exists())
         .ok_or_else(|| anyhow!("too many apps generated, pick a custom app name?"))?
         .display()
