@@ -1,3 +1,5 @@
+use std::{fs, path::Path};
+
 use crate::{
     config::{Config, ProjectSetupActions},
     data::{Assets, Location},
@@ -22,7 +24,7 @@ fn expand<'a>(
     is_git: bool,
     vendors: &'a Vendors<'_>,
 ) -> AnyResult<(Box<dyn Vendor>, Location)> {
-    let (vendor, url) = if shortlink.starts_with("https://") {
+    let res = if shortlink.starts_with("https://") {
         //https://github.com/jondot/hygen/-/foobar
 
         let url = Url::parse(shortlink)?;
@@ -30,7 +32,13 @@ fn expand<'a>(
             url.domain()
                 .ok_or_else(|| anyhow::anyhow!("domain is missing"))?,
         )?;
-        (vendor, url)
+        (vendor, Location::from(&url, is_git)?)
+    } else if Path::new(shortlink).exists() {
+        let p = Path::new(shortlink);
+        let local_git_url = Url::parse(&format!("file://{}.git", p.to_string_lossy()))?;
+
+        let vendor = vendors.lookup(local_git_url.scheme())?;
+        (vendor, Location::from(&local_git_url, true)?)
     } else if let Some(caps) = RE_GIT.captures(shortlink) {
         let domain = caps
             .get(1)
@@ -38,13 +46,16 @@ fn expand<'a>(
             .as_str();
         (
             vendors.lookup(domain)?,
-            Url::parse(&format!(
-                "https://{}/{}",
-                domain,
-                caps.get(2)
-                    .ok_or_else(|| anyhow::anyhow!("parse failed: no path"))?
-                    .as_str()
-            ))?,
+            Location::from(
+                &Url::parse(&format!(
+                    "https://{}/{}",
+                    domain,
+                    caps.get(2)
+                        .ok_or_else(|| anyhow::anyhow!("parse failed: no path"))?
+                        .as_str()
+                ))?,
+                is_git,
+            )?,
         )
     } else if let Some(caps) = RE_VENDOR.captures(shortlink) {
         let vendor = vendors.lookup(
@@ -60,15 +71,14 @@ fn expand<'a>(
                 .as_str()
         ))?;
 
-        (vendor, url)
+        (vendor, Location::from(&url, is_git)?)
     } else {
         let vendor = vendors.lookup("")?;
         let url = Url::parse(&format!("https://{}/{}", vendor.base(), shortlink))?;
-        (vendor, url)
+        (vendor, Location::from(&url, is_git)?)
     };
 
-    let location = Location::from(&url, is_git)?;
-    Ok((vendor, location))
+    Ok(res)
 }
 
 pub struct Shortlink<'a> {

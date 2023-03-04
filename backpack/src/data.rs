@@ -19,11 +19,15 @@ pub struct Location {
 }
 impl Location {
     pub fn git_url(&self) -> String {
-        format!(
-            "git@{}:{}.git",
-            self.domain,
-            self.path.trim_start_matches('/')
-        ) // needs: auth, port
+        if self.url.starts_with("file://") {
+            format!("file://{}", self.path)
+        } else {
+            format!(
+                "git@{}:{}.git",
+                self.domain,
+                self.path.trim_start_matches('/')
+            ) // needs: auth, port
+        }
     }
 
     pub fn web_url(&self) -> String {
