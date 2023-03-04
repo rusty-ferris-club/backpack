@@ -41,7 +41,7 @@ fn test_github() {
         false,
     )
     .unwrap();
-    let (_, assets) = gh.resolve(&location, &git).unwrap();
+    let assets = gh.resolve(&location, &git).unwrap();
     assert_debug_snapshot!(assets);
     assert_eq!(
         reqwest::blocking::get(assets.archive.unwrap().url)
@@ -65,7 +65,7 @@ fn test_gitlab() {
         false,
     )
     .unwrap();
-    let (_, assets) = gh.resolve(&location, &git).unwrap();
+    let assets = gh.resolve(&location, &git).unwrap();
     assert_debug_snapshot!(assets);
     assert_eq!(
         reqwest::blocking::get(assets.archive.unwrap().url)
@@ -89,7 +89,7 @@ fn test_bitbucket() {
         false,
     )
     .unwrap();
-    let (_, assets) = gh.resolve(&location, &git).unwrap();
+    let assets = gh.resolve(&location, &git).unwrap();
     assert_debug_snapshot!(assets);
     assert_eq!(
         reqwest::blocking::get(assets.archive.unwrap().url)

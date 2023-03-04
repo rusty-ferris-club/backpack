@@ -102,7 +102,7 @@ impl<'a> Shortlink<'a> {
         // expand and resolve
         let vendors = Vendors::new(self.config.vendors.as_ref());
         let (vendor, location) = expand(shortlink, is_git, &vendors)?;
-        let (location, assets) = vendor.resolve(&location, self.git)?;
+        let assets = vendor.resolve(&location, self.git)?;
         Ok((location, assets))
     }
 

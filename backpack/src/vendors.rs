@@ -57,7 +57,7 @@ pub trait Vendor {
     /// # Errors
     ///
     /// This function will return an error if network or other I/O is erroring.
-    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<(Location, Assets)>;
+    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<Assets>;
 }
 
 impl Debug for dyn Vendor {
@@ -86,27 +86,24 @@ impl Vendor for Github {
         self.base.as_str()
     }
     #[tracing::instrument(name = "github_resolve", skip_all, err)]
-    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<(Location, Assets)> {
+    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<Assets> {
         let gref = git.get_ref_or_default(location)?.ref_;
-        Ok((
-            location.clone(),
-            Assets {
-                archive: Some(Archive {
-                    url: format!(
-                        "https://{}{}/archive/{}.tar.gz",
-                        self.base(),
-                        location.path,
-                        gref,
-                    ),
-                    root: ArchiveRoot::FirstFolder,
-                }),
-                git: Some(format!(
-                    "git@{}:{}.git",
+        Ok(Assets {
+            archive: Some(Archive {
+                url: format!(
+                    "https://{}{}/archive/{}.tar.gz",
                     self.base(),
-                    location.path.trim_start_matches('/')
-                )),
-            },
-        ))
+                    location.path,
+                    gref,
+                ),
+                root: ArchiveRoot::FirstFolder,
+            }),
+            git: Some(format!(
+                "git@{}:{}.git",
+                self.base(),
+                location.path.trim_start_matches('/')
+            )),
+        })
     }
 }
 
@@ -126,18 +123,11 @@ impl Vendor for LocalGit {
         self.base.as_str()
     }
     #[tracing::instrument(name = "localgit_resolve", skip_all, err)]
-    fn resolve(
-        &self,
-        location: &Location,
-        _git: &dyn GitProvider,
-    ) -> AnyResult<(Location, Assets)> {
-        Ok((
-            location.clone(),
-            Assets {
-                archive: None,
-                git: Some(location.url.clone()),
-            },
-        ))
+    fn resolve(&self, location: &Location, _git: &dyn GitProvider) -> AnyResult<Assets> {
+        Ok(Assets {
+            archive: None,
+            git: Some(location.url.clone()),
+        })
     }
 }
 
@@ -157,33 +147,30 @@ impl Vendor for GithubGist {
         self.base.as_str()
     }
     #[tracing::instrument(name = "github_gist_resolve", skip_all, err)]
-    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<(Location, Assets)> {
+    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<Assets> {
         let refs = git.ls_remote(location)?;
         let head = refs
             .iter()
             .find(|r| r.ref_ == "HEAD")
             .ok_or_else(|| anyhow::anyhow!("no HEAD ref found"))?;
 
-        Ok((
-            location.clone(),
-            Assets {
-                archive: Some(Archive {
-                    url: format!(
-                        //   https://gist.github.com/jondot/15086f59dab44f30bb10f82ca09f4887/archive/44a751f50ea93f92c2bc6332e4de770429862888.zip
-                        "https://{}{}/archive/{}.tar.gz",
-                        self.base(),
-                        location.path,
-                        head.ref_,
-                    ),
-                    root: ArchiveRoot::FirstFolder,
-                }),
-                git: Some(format!(
-                    "git@{}:{}.git",
+        Ok(Assets {
+            archive: Some(Archive {
+                url: format!(
+                    //   https://gist.github.com/jondot/15086f59dab44f30bb10f82ca09f4887/archive/44a751f50ea93f92c2bc6332e4de770429862888.zip
+                    "https://{}{}/archive/{}.tar.gz",
                     self.base(),
-                    location.path.trim_start_matches('/')
-                )),
-            },
-        ))
+                    location.path,
+                    head.ref_,
+                ),
+                root: ArchiveRoot::FirstFolder,
+            }),
+            git: Some(format!(
+                "git@{}:{}.git",
+                self.base(),
+                location.path.trim_start_matches('/')
+            )),
+        })
     }
 }
 pub struct BitBucket {
@@ -204,27 +191,24 @@ impl Vendor for BitBucket {
     }
 
     #[tracing::instrument(name = "bitbucket_resolve", skip_all, err)]
-    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<(Location, Assets)> {
+    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<Assets> {
         let gref = git.get_ref_or_default(location)?.ref_;
-        Ok((
-            location.clone(),
-            Assets {
-                archive: Some(Archive {
-                    url: format!(
-                        "https://{}{}/get/{}.tar.gz",
-                        self.base(),
-                        location.path,
-                        gref,
-                    ),
-                    root: ArchiveRoot::FirstFolder,
-                }),
-                git: Some(format!(
-                    "git@{}:{}.git",
+        Ok(Assets {
+            archive: Some(Archive {
+                url: format!(
+                    "https://{}{}/get/{}.tar.gz",
                     self.base(),
-                    location.path.trim_start_matches('/')
-                )),
-            },
-        ))
+                    location.path,
+                    gref,
+                ),
+                root: ArchiveRoot::FirstFolder,
+            }),
+            git: Some(format!(
+                "git@{}:{}.git",
+                self.base(),
+                location.path.trim_start_matches('/')
+            )),
+        })
     }
 }
 
@@ -246,29 +230,26 @@ impl Vendor for Gitlab {
     }
 
     #[tracing::instrument(name = "gitlab_resolve", skip_all, err)]
-    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<(Location, Assets)> {
+    fn resolve(&self, location: &Location, git: &dyn GitProvider) -> AnyResult<Assets> {
         let gref = git.get_ref_or_default(location)?.ref_;
         let gref_file = gref.replace('/', "-");
-        Ok((
-            location.clone(),
-            Assets {
-                archive: Some(Archive {
-                    url: format!(
-                        "https://{}{}/-/archive/{}/{}-{}.tar.gz",
-                        self.base(),
-                        location.path,
-                        gref,
-                        location.project,
-                        gref_file,
-                    ),
-                    root: ArchiveRoot::FirstFolder,
-                }),
-                git: Some(format!(
-                    "git@{}:{}.git",
+        Ok(Assets {
+            archive: Some(Archive {
+                url: format!(
+                    "https://{}{}/-/archive/{}/{}-{}.tar.gz",
                     self.base(),
-                    location.path.trim_start_matches('/')
-                )),
-            },
-        ))
+                    location.path,
+                    gref,
+                    location.project,
+                    gref_file,
+                ),
+                root: ArchiveRoot::FirstFolder,
+            }),
+            git: Some(format!(
+                "git@{}:{}.git",
+                self.base(),
+                location.path.trim_start_matches('/')
+            )),
+        })
     }
 }
