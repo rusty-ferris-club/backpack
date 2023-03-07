@@ -19,10 +19,10 @@ lazy_static! {
     static ref RE_VENDOR: Regex = Regex::new(r"^([a-zA-Z0-9_-]+):(.+)$").unwrap();
 }
 
-fn expand<'a>(
+fn expand(
     shortlink: &str,
     is_git: bool,
-    vendors: &'a Vendors<'_>,
+    vendors: &Vendors<'_>,
 ) -> AnyResult<(Box<dyn Vendor>, Location)> {
     let res = if shortlink.starts_with("https://") {
         //https://github.com/jondot/hygen/-/foobar

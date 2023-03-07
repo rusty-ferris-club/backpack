@@ -28,7 +28,7 @@ fn main() -> Result<(), anyhow::Error> {
     let res = match matches.subcommand() {
         Some(("coverage", sm)) => tasks::coverage(sm.is_present("dev")),
         Some(("vars", _)) => {
-            println!("root: {:?}", root);
+            println!("root: {root:?}");
             Ok(())
         }
         Some(("ci", _)) => tasks::ci(),
