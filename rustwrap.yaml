@@ -1,0 +1,31 @@
+targets:
+  - platform: win32
+    arch: x64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-x86_64-windows.zip
+  - platform: linux
+    arch: x64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-x86_64-linux.tar.xz
+  - platform: darwin
+    arch: x64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-x86_64-macos.tar.xz
+  - platform: darwin
+    arch: arm64
+    url_template: https://github.com/rusty-ferris-club/backpack/releases/download/v__VERSION__/backpack-aarch64-macos.tar.xz
+brew:
+  name: backpack 
+  publish: true
+  tap: rusty-ferris-club/homebrew-tap
+  recipe_fname: backpack.rb
+  recipe_template: |
+    class Backpack < Formula
+      desc "🎒 CLI to create starters from repos + Templates 🤖 + Actions 🚀"
+      homepage "http://github.com/rusty-ferris-club/backpack"
+      url "__URL__"
+      version "__VERSION__"
+      sha256 "__SHA__"
+
+      def install
+        bin.install "bp"
+      end
+    end
+
