@@ -45,15 +45,7 @@ impl Coordinate {
 
         let location_folder = location.subfolder.clone().map(PathBuf::from);
         let final_dest = if let Some(dest) = dest {
-            if is_file {
-                let fname = from
-                    .file_name()
-                    .ok_or_else(|| anyhow::anyhow!("cannot get file name for {:?}", from))?;
-
-                dest.join(fname)
-            } else {
-                dest.to_path_buf()
-            }
+            dest.to_path_buf()
         } else if is_file {
             let fname = from
                 .file_name()

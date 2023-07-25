@@ -54,15 +54,6 @@ impl Runner {
         opts: &Opts,
         events: Option<&RunnerEvents>,
     ) -> Result<()> {
-        // if apply and no dest, it's always current folder
-        let dest = dest.or_else(|| {
-            if opts.mode == CopyMode::Apply {
-                Some(".")
-            } else {
-                None
-            }
-        });
-
         // load from direct file, or magically load from 'local' then 'global', then default
         let config = opts.config_file.as_ref().map_or_else(
             || Config::load_or_default().context("could not load configuration"),
@@ -73,7 +64,7 @@ impl Runner {
 
         let prompt = &mut Prompt::build(&config, opts.show_progress, events);
 
-        let (shortlink, dest, should_confirm) = prompt.fill_missing(shortlink, dest)?;
+        let (shortlink, dest, should_confirm) = prompt.fill_missing(shortlink, dest, &opts.mode)?;
 
         let sl = Shortlink::new(&config, self.git.as_ref());
 

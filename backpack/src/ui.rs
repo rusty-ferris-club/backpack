@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::data::CopyMode;
 use crate::run::RunnerEvents;
 use crate::templates::CopyResult;
 use anyhow::{anyhow, Context, Result as AnyResult};
@@ -52,6 +53,7 @@ impl<'a> Prompt<'a> {
         &mut self,
         shortlink: Option<&str>,
         dest: Option<&str>,
+        mode: &CopyMode,
     ) -> AnyResult<(String, Option<String>, bool)> {
         match (shortlink, dest) {
             (Some(s), Some(d)) => Ok((s.to_string(), Some(d.to_string()), false)),
@@ -67,7 +69,18 @@ impl<'a> Prompt<'a> {
                     Ok((shortlink, self.input_dest()?, true))
                 }
             }
-            (Some(s), None) => Ok((s.to_string(), self.input_dest()?, true)),
+            (Some(s), None) => Ok((
+                s.to_string(),
+                // when applying, if no target folder, it's always the current one so let it resolve
+                // automatically in a smart way later down the road by *not* filling in
+                // if it's copy (clone new project), ask the user where to
+                if *mode == CopyMode::Copy {
+                    self.input_dest()?
+                } else {
+                    None
+                },
+                true,
+            )),
         }
     }
 
