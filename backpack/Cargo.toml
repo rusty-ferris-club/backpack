@@ -46,7 +46,9 @@ requestty = "0.4.0"
 requestty-ui = "0.4.0"
 tracing-forest = { version = "^0.1.4" }
 tracing-subscriber = { version = "^0.3.11", features = ["env-filter"] }
-interactive-actions = "1.0.1"
+# interactive-actions = "1.0.1"
+# interactive-actions =  { path = "../../interactive-actions/interactive-actions" }
+interactive-actions =  { git = "https://github.com/strowk/interactive-actions.git" }
 tera = "^1.17.0"
 tera-text-filters = "^1.0.0"
 content_inspector = "0.2.4"

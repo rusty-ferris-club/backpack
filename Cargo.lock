@@ -1049,8 +1049,7 @@ dependencies = [
 [[package]]
 name = "interactive-actions"
 version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51a9fa54d83a0411a4b3e6ba361996cf3edf792719b2671cfebd780da87eb62f"
+source = "git+https://github.com/strowk/interactive-actions.git#d11b5c375ebe1284db747a4727d9aa91bd2d73c1"
 dependencies = [
  "anyhow",
  "requestty",
