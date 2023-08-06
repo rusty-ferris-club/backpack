@@ -122,6 +122,7 @@ impl<'a> Shortlink<'a> {
             .map(|project| ProjectSetupActions {
                 actions: project.actions.clone(),
                 swaps: project.swaps.clone(),
+                use_camp: project.use_camp,
             })
     }
 }
