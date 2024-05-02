@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::Context;
@@ -34,6 +36,9 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
         prompt.say("Found local project config. Reading actions and swaps from it.");
         let name = prompt.ask_for_project_name(&local_project.project.shortlink)?;
         let mut config = config.clone();
+        if config.projects.is_none() {
+            config.projects = Some(BTreeMap::new());
+        }
         if let Some(projects) = config.projects.as_mut() {
             projects.insert(name.clone(), local_project.project.clone());
         }
@@ -46,6 +51,9 @@ pub fn run(_matches: &ArgMatches, subcommand_matches: &ArgMatches) -> AnyResult<
         let name = prompt.ask_for_project_name(&repo)?;
         // add it to the configuration and save
         let mut config = config.clone();
+        if config.projects.is_none() {
+            config.projects = Some(BTreeMap::new());
+        }
         if let Some(projects) = config.projects.as_mut() {
             projects.insert(name.clone(), Project::from_link(&repo));
         }
