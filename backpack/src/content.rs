@@ -1,8 +1,10 @@
+use crate::camp::Camp;
 use crate::config::ProjectSetupActions;
 use crate::data::{Location, Opts, Overwrite};
 use crate::templates::{CopyResult, Swapper};
 use crate::ui::Prompt;
 use anyhow::Result;
+use interactive_actions::data::Response;
 use interactive_actions::{
     data::ActionResult,
     data::{Action, ActionHook},
@@ -94,21 +96,56 @@ impl<'a> Deployer<'a> {
             coord.to.as_path()
         };
 
-        let (actions, swaps) = project_setup
-            .as_ref()
-            .map_or((None, None), |p| (p.actions.as_ref(), p.swaps.as_ref()));
+        let (actions, swaps, use_camp) = project_setup.map_or((None, None, false), |p| {
+            (p.actions, p.swaps, p.use_camp.unwrap_or(false))
+        });
 
-        if let Some(actions) = actions {
-            self.action_runner.run(
-                actions,
+        let (camp, actions) = if let Some(mut actions) = actions {
+            let camp = if use_camp {
+                let camp = Camp::new()?;
+                let interaction_answers = &camp.data.interaction_answers;
+                for action in actions.iter_mut() {
+                    if let Some(interaction) = action.interaction.as_mut() {
+                        interaction_answers.get(&action.name).map(|answer| {
+                            interaction.default_value = Some(answer.clone());
+                            interaction.ask_if_has_default =
+                                interaction.ask_if_has_default.or(Some(false));
+                        });
+                    }
+                }
+                Some(camp)
+            } else {
+                None
+            };
+            (camp, Some(actions))
+        } else {
+            (None, None)
+        };
+
+        if let Some(actions) = actions.as_ref() {
+            let actions_runner_result = self.action_runner.run(
+                &actions,
                 Some(actions_dest),
                 vars,
                 ActionHook::Before,
                 None::<fn(&Action)>,
             )?;
+
+            if let Some(mut camp) = camp {
+                for action_runner_result in actions_runner_result {
+                    let interaction_response = action_runner_result.response;
+                    if let Response::Text(interaction_response) = interaction_response {
+                        camp.data.interaction_answers.insert(
+                            action_runner_result.name,
+                            interactive_actions::data::DefaultValue::Input(interaction_response),
+                        );
+                    }
+                }
+                camp.data.save_answers()?;
+            };
         }
 
-        let swapper = Swapper::with_vars(swaps, vars)?;
+        let swapper = Swapper::with_vars(swaps.as_ref(), vars)?;
 
         let files = self.copy(
             &swapper,
@@ -131,7 +168,7 @@ impl<'a> Deployer<'a> {
             );
         }
 
-        let after_actions = if let Some(actions) = actions {
+        let after_actions = if let Some(actions) = actions.as_ref() {
             Some(self.action_runner.run(
                 actions,
                 Some(actions_dest),

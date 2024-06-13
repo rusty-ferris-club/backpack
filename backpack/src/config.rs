@@ -230,6 +230,10 @@ pub struct Project {
     #[serde(rename = "swaps")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub swaps: Option<Vec<Swap>>,
+
+    #[serde(rename = "use_camp")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_camp: Option<bool>,
 }
 impl Project {
     pub fn from_link(ln: &str) -> Self {
@@ -247,6 +251,10 @@ pub struct ProjectSetupActions {
 
     #[serde(rename = "swaps")]
     pub swaps: Option<Vec<Swap>>,
+
+    #[serde(rename = "use_camp")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_camp: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
